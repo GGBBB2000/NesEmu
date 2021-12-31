@@ -23,9 +23,9 @@ class Cpu(val bus: Bus) : IODevice {
         return Address.buildAddress(upper.toInt(), lower.toInt())
     }
 
-    private fun getIndexedAbsoluteAddress(x: Register.X) : Address = getAbsoluteAddress() + x.value
+    private fun getXIndexedAbsoluteAddress() : Address = getAbsoluteAddress() + x.value
 
-    private fun getIndexedAbsoluteAddress(y: Register.Y) : Address = getAbsoluteAddress() + y.value
+    private fun getYIndexedAbsoluteAddress() : Address = getAbsoluteAddress() + y.value
 
     fun run() : Int {
         val instInfo = fetch()
@@ -49,6 +49,7 @@ class Cpu(val bus: Bus) : IODevice {
             //BCS
             //BEQ
             //BNE
+            0xD0 -> InstructionInfo(0xD0.toByte(), BNE(pc, p, read(pc.address++)), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BVC
             //BVS
             //BPL
@@ -69,6 +70,7 @@ class Cpu(val bus: Bus) : IODevice {
             //DEX
             //INY
             //DEY
+            0x88 -> InstructionInfo(0x88.toByte(), DEY(y, p), 2)
             //CLC
             //SEC
             0x78 -> InstructionInfo(0x78, SEI(p), 2)
@@ -77,7 +79,7 @@ class Cpu(val bus: Bus) : IODevice {
             //CLV
             //LDA
             0xA9 -> InstructionInfo(0xA9.toByte(), LDA(read(pc.address++), a, p), 2)
-            0xBD -> InstructionInfo(0xBD.toByte(), LDA(read(getIndexedAbsoluteAddress(x)), a, p), 4) // ページクロスで+1
+            0xBD -> InstructionInfo(0xBD.toByte(), LDA(read(getXIndexedAbsoluteAddress()), a, p), 4) // ページクロスで+1
             //LDX
             0xA2 -> InstructionInfo(0xA2.toByte(), LDX(read(pc.address++), x, p), 2)
             //LDY
