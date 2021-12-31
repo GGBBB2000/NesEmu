@@ -7,7 +7,7 @@ import com.example.nesemu.nes.cpu.Register
 class INX(val x: Register.X, val p: Register.P) : Instruction() {
     override fun exec() {
         x.value++
-        p.negative = (x.value.toInt() and 0xFF) < 0
+        p.negative = x.value.toInt() < 0
         p.zero = x.value.toInt() == 0
     }
 }
