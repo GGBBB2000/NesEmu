@@ -1,11 +1,11 @@
 package com.example.nesemu.nes.cpu.instruction
 
-import android.location.Address
-import com.example.nesemu.nes.Bus
 import com.example.nesemu.nes.cpu.Register
 
-class DEY(y: Register.Y, p: Register.P) : Instruction() {
+class DEY(val y: Register.Y, val p: Register.P) : Instruction() {
     override fun exec() {
-        TODO("Not yet implemented")
+        y.value--
+        p.negative = (y.value.toInt() and 0xFF) < 0
+        p.zero = y.value.toInt() == 0
     }
 }
