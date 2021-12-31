@@ -1,10 +1,10 @@
 package com.example.nesemu.nes.cpu.instruction
 
-import android.location.Address
 import com.example.nesemu.nes.cpu.Register
+import com.example.nesemu.nes.util.Address
 
-class JMP(dest: Address, pc: Register.PC) : Instruction() {
+class JMP(val dest: Address, val pc: Register.PC) : Instruction() {
     override fun exec() {
-        TODO("Not yet implemented")
+        pc.address = dest
     }
 }

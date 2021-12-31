@@ -56,6 +56,7 @@ class Cpu(val bus: Bus) : IODevice {
             //BMI
             //BIT
             //JMP
+            0x4C -> InstructionInfo(0x4C, JMP(getAbsoluteAddress(), pc), 2)
             //JSR
             //RTS
             //BRK
