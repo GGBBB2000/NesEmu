@@ -8,6 +8,8 @@ class Address private constructor(data: Int) {
             val data = (((upperAddress shl 8) and 0xFF00) or (lowerAddress and 0xFF)) and 0xFFFF
             return Address(data)
         }
+
+        fun buildAddress(address: Int) = Address(address)
     }
 
     operator fun plusAssign(arg: Byte) {
