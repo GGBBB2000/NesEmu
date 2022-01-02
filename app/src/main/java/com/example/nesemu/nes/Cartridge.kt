@@ -3,8 +3,7 @@ package com.example.nesemu.nes
 import com.example.nesemu.nes.util.Address
 import com.example.nesemu.nes.util.IODevice
 
-class Cartridge private constructor(private val header: INes, private val prgRom: Rom, private val chrRom: Rom) :
-    IODevice {
+class Cartridge private constructor(private val header: INes, private val prgRom: Rom, private val chrRom: Rom) {
     companion object {
         fun getCartridge(cartridgeData: ByteArray): Cartridge {
             val headerSize = 16;
@@ -22,12 +21,9 @@ class Cartridge private constructor(private val header: INes, private val prgRom
         }
     }
 
-    override fun read(address: Address): Byte = this.prgRom.read(address)
+    fun readPrgRom(address: Address): Byte = this.prgRom.read(address)
 
-
-    override fun write(address: Address, data: Byte) {
-        TODO("Not yet implemented")
-    }
+    fun readChrRom(address: Address): Byte = this.chrRom.read(address)
 
     data class INes(val nes: String,
                     val prgSize: Byte,
