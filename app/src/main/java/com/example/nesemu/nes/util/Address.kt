@@ -17,7 +17,7 @@ class Address private constructor(data: Int) {
     }
 
     operator fun plus(arg: Byte) : Address {
-        val newAddress = this.value + arg.toInt() and 0xFF
+        val newAddress = this.value + (arg.toInt() and 0xFF)
         return Address(newAddress)
     }
 
