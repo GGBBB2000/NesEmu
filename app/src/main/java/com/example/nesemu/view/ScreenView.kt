@@ -7,7 +7,7 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 
-class GameView(context: Context, attributeSet: AttributeSet) : View(context, attributeSet) {
+class ScreenView(context: Context, attributeSet: AttributeSet) : View(context, attributeSet) {
     private val screenWidth : Int = 256;
     private val screenHeight : Int = 240;
     private val screen : Bitmap = Bitmap.createBitmap(screenWidth, screenHeight, Bitmap.Config.ARGB_8888)
