@@ -39,6 +39,8 @@ class Address private constructor(data: Int) {
 
     operator fun inc() : Address = Address(value + 1)
 
+    operator fun dec() : Address = Address(value - 1)
+
     override fun toString(): String {
         return "0x" + value.toString(16)
     }
