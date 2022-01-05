@@ -8,6 +8,13 @@ class Nes(cartridge: Cartridge) {
     private val cpu = Cpu(bus)
 
     fun run() {
-        cpu.run()
+        var totalCycle = 0
+        while (totalCycle < 341 * 262) {
+            val cycle = cpu.run()
+            ppu.run(cycle * 3)
+            totalCycle += cycle * 3
+        }
     }
+
+    fun getScreen(): Ppu.Screen = ppu.screen
 }

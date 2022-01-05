@@ -1,12 +1,55 @@
 package com.example.nesemu.nes
 
+import androidx.lifecycle.MutableLiveData
 import com.example.nesemu.nes.util.Address
 import com.example.nesemu.nes.util.IODevice
 
-class Ppu : IODevice {
-    val ram = Ram(0x2000)
+class Ppu(private val cartridge: Cartridge) : IODevice {
+    private val ctrlRegister1 = CtrlRegister1()
+    private val ctrlRegister2 = CtrlRegister2()
+    private val status = PpuStatus()
+    private val spriteMemAddress = MemoryAddress.SpriteMemAddress()
+    private val ppuMemAddress = MemoryAddress.PpuMemAddress(ctrlRegister1)
+    private val nameTables = Array(4){Array<Byte>(0x3C0){0}}
+    private val attributeTables = Array(4){Array<Byte>(0x40){0}}
+    private val bgPaletteTables = Array(4){Array<Byte>(4){0}}
+    private val chrPaletteTables = Array(4){Array<Byte>(4){0}}
+    val screen = Screen(Array(256 * 240) {0xFF000000.toInt()}, MutableLiveData(false))
+    // LiveDataは何書いてもObserverの処理が走るらしい...
+    @Suppress("ArrayInDataClass")
+    data class Screen(val data: Array<Int>, var isReady: MutableLiveData<Boolean>)
 
-    data class ctrlRegister1(val data: Byte) {
+    private var readSyncBuffer: Byte = 0xFF.toByte() // CPUとPPU間の，データread時のクロック同期をとるためのバッファ
+
+
+    sealed class MemoryAddress {
+        open var value: Int = 0
+
+        open fun increment() {
+            value++
+        }
+
+        class SpriteMemAddress : MemoryAddress()
+
+        class PpuMemAddress(private val register1: CtrlRegister1) : MemoryAddress() {
+            private var addressIndex = 0
+            private var addressArray = arrayOf(0, 0)
+
+            override var value: Int = 0
+                get() = super.value
+                set(value) {
+                    addressArray[addressIndex++ % 2] = value
+                    super.value = ((addressArray[0] shl 8) and 0xFF00) or (addressArray[1] and 0xFF)
+                    field = value
+                }
+
+            override fun increment() {
+                super.value += register1.getAdderIncAmount()
+            }
+        }
+    }
+
+    data class CtrlRegister1(var data: Byte = 0) {
         fun isNMIEnable() : Boolean = (data.toInt() and  0b1000_0000) != 0
 
         /**
@@ -16,9 +59,9 @@ class Ppu : IODevice {
 
         fun getBGPatternTableAddress() : Address {
             return if ((data.toInt() and 0b0001_0000 ushr 4) == 0) {
-                Address.buildAddress(0x00, 0x00)
+                Address.buildAddress(0x0000)
             } else {
-                Address.buildAddress(0x10, 0x00)
+                Address.buildAddress(0x1000)
             }
         }
 
@@ -33,9 +76,31 @@ class Ppu : IODevice {
         fun getNameTableSelect() : Int = data.toInt() and 0b11
     }
 
-    data class ctrlRegister2(val data: Byte) {
+    data class CtrlRegister2(var data: Byte = 0) {
+        fun getBGColor() : Int {
+            val index = (data.toInt() and 0b1110_000) ushr 4
+            return when (index) {
+                0b000 -> 0xFF000000.toInt()
+                0b001 -> 0xFF00FF00.toInt()
+                0b010 -> 0xFF0000FF.toInt()
+                0b100 -> 0xFFFF00FF.toInt()
+                else -> 0xFF000000.toInt()
+            }
+        }
 
+        fun spriteEnable() = (data.toInt() and 0b0001_0000) != 0
+
+        fun bgEnable() = (data.toInt() and 0b0000_1000) != 0
+
+        fun spriteMaskEnable() = (data.toInt() and 0b0000_0100) != 0
+
+        fun bgMaskEnable() = (data.toInt() and 0b0000_0010) != 0
+
+        fun colorEnable() = (data.toInt() and 0b0000_0001) == 0
     }
+
+    // TODO PPUの読み込み時は0x2005のアドレス書き込み順序がリセットされる
+    data class PpuStatus(var data: Byte = 0) {}
 
     val colors: Array<Int> = arrayOf(
         0xFF808080.toInt(), 0xFF003DA6.toInt(), 0xFF0012B0.toInt(), 0xFF440096.toInt(),
@@ -57,10 +122,172 @@ class Ppu : IODevice {
     )
 
     override fun read(address: Address): Byte {
-        TODO("Not yet implemented")
+        return when (address.value) {
+            0x2002 -> status.data
+            0x2004 -> 0 // TODO impl sprite mem data
+            0x2007 -> readInternalMemory()
+            else -> error("ppu read: ${address.value.toString(16)} Illegal Access")
+        }
     }
 
     override fun write(address: Address, data: Byte) {
-        TODO("Not yet implemented")
+        //println("${data.toUByte().toString(16)} → 0x${ppuMemAddress.value.toString(16)}")
+        when (address.value) {
+            0x2000 -> ctrlRegister1.data = data
+            0x2001 -> ctrlRegister2.data = data
+            0x2003 -> spriteMemAddress.value  = data.toInt() and 0xFF
+            0x2005 -> {} // TODO sprite palette
+            0x2006 -> ppuMemAddress.value = data.toInt() and 0xFF
+            0x2007 -> writeToInternalMemory(data)
+        }
+    }
+
+    // PPUのパレット以外を読むときはreadSyncBuffer（１サイクル前）の値が返り，代わりにネームテーブル3?のミラーがバッファされる???
+    private fun readInternalMemory() : Byte {
+        return when (ppuMemAddress.value) {
+            in 0x0000 until 0x2000 -> { // パターンテーブル
+                readSyncBuffer = cartridge.readChrRom(Address.buildAddress(ppuMemAddress.value))
+                readSyncBuffer
+            }
+            in 0x2000 until 0x23C0, in 0x3000 until 0x33C0 -> { // ネームテーブル0 と　ミラー
+                readSyncBuffer = nameTables[0][ppuMemAddress.value % 0x2000]
+                readSyncBuffer
+            }
+            in 0x23C0 until 0x2400, in 0x33C0 until 0x3400 -> { // 属性テーブル0 と　ミラー
+                readSyncBuffer = attributeTables[0][ppuMemAddress.value]
+                readSyncBuffer
+            }
+            in 0x2400 until 0x27C0, in 0x3400 until 0x37C0 -> { // ネームテーブル1 まとめて書いてもいいけど，ミラーリングの実装を待つ
+                readSyncBuffer = nameTables[1][ppuMemAddress.value]
+                readSyncBuffer
+            }
+            in 0x27C0 until 0x2800, in 0x37C0 until 0x3800 -> { // 属性テーブル1
+                readSyncBuffer = attributeTables[1][ppuMemAddress.value]
+                readSyncBuffer
+            }
+            in 0x2800 until 0x2BC0, in 0x3800 until 0x3BC0 -> { // ネームテーブル2
+                readSyncBuffer = nameTables[2][ppuMemAddress.value]
+                readSyncBuffer
+            }
+            in 0x2BC0 until 0x2C00, in 0x3BC0 until 0x3C00 -> { // 属性テーブル2
+                readSyncBuffer = attributeTables[2][ppuMemAddress.value]
+                readSyncBuffer
+            }
+            in 0x2C00 until 0x2FC0, in 0x3C00 until 0x3F00 -> { // ネームテーブル3 0x3F00以降のバッファはパレットを呼ぶときに使われる
+                readSyncBuffer = nameTables[3][ppuMemAddress.value]
+                readSyncBuffer
+            }
+            in 0x2FC0 until 0x3000 -> { // 属性テーブル3
+                readSyncBuffer = attributeTables[3][ppuMemAddress.value]
+                readSyncBuffer
+            }
+            in 0x3F00 until 0x3F10, // バックグラウンドパレット
+            in 0x3F20 until 0x3F30, // ミラー
+            in 0x3F40 until 0x3F50,
+            in 0x3F60 until 0x3F70,
+            in 0x3F80 until 0x3F90,
+            in 0x3FA0 until 0x3FB0,
+            in 0x3FC0 until 0x3FD0,
+            in 0x3FE0 until 0x3FF0
+            -> {
+                bgPaletteTables[(ppuMemAddress.value - 0x3F00) % 0x10 / 4][(ppuMemAddress.value - 0x3F00) % 0x10 % 4]
+            }
+            in 0x3F10 until 0x3F20,
+            in 0x3F30 until 0x3F40,
+            in 0x3F50 until 0x3F60,
+            in 0x3F70 until 0x3F80,
+            in 0x3F90 until 0x3FA0,
+            in 0x3FB0 until 0x3FC0,
+            in 0x3FD0 until 0x3FE0,
+            in 0x3FF0 .. 0x3FFF
+            -> { // スプライトパレット TODO $3F00/$3F04/$3F08/$3F0Cのミラーの実装
+                0
+            }
+
+            else -> error("ppu internal: address out of bounds")
+        }
+    }
+
+    private fun writeToInternalMemory(data: Byte) {
+        println("${data.toUByte().toString(16)} → 0x${ppuMemAddress.value.toString(16)}")
+        when (ppuMemAddress.value) {
+            in 0x2000 until 0x23C0, in 0x3000 until 0x33C0 -> { // ネームテーブル0 と　ミラー TODO ミラーのアドレス処理
+                nameTables[0][ppuMemAddress.value % 0x3000 % 0x2000] = data
+            }
+            in 0x23C0 until 0x2400, in 0x33C0 until 0x3400 -> { // 属性テーブル0 と　ミラー
+                attributeTables[0][ppuMemAddress.value % 0x33C0 % 0x23C0] = data
+            }
+            in 0x2400 until 0x27C0, in 0x3400 until 0x37C0 -> { // ネームテーブル1 まとめて書いてもいいけど，ミラーリングの実装を待つ
+                nameTables[1][ppuMemAddress.value] = data
+            }
+            in 0x27C0 until 0x2800, in 0x37C0 until 0x3800 -> { // 属性テーブル1
+                attributeTables[1][ppuMemAddress.value] = data
+            }
+            in 0x2800 until 0x2BC0, in 0x3800 until 0x3BC0 -> { // ネームテーブル2
+                nameTables[2][ppuMemAddress.value] = data
+            }
+            in 0x2BC0 until 0x2C00, in 0x3BC0 until 0x3C00 -> { // 属性テーブル2
+                attributeTables[2][ppuMemAddress.value] = data
+            }
+            in 0x2C00 until 0x2FC0, in 0x3C00 until 0x3F00 -> { // ネームテーブル3 0x3F00以降のバッファはパレットを呼ぶときに使われる
+                nameTables[3][ppuMemAddress.value] = data
+            }
+            in 0x2FC0 until 0x3000 -> { // 属性テーブル3
+                attributeTables[3][ppuMemAddress.value] = data
+            }
+            in 0x3F00 until 0x3F10, // バックグラウンドパレット
+            in 0x3F20 until 0x3F30, // ミラー
+            in 0x3F40 until 0x3F50,
+            in 0x3F60 until 0x3F70,
+            in 0x3F80 until 0x3F90,
+            in 0x3FA0 until 0x3FB0,
+            in 0x3FC0 until 0x3FD0,
+            in 0x3FE0 until 0x3FF0
+            -> bgPaletteTables[(ppuMemAddress.value - 0x3F00) % 0x10 / 4][(ppuMemAddress.value - 0x3F00) % 0x10 % 4] = data
+            in 0x3F10 until 0x3F20,
+            in 0x3F30 until 0x3F40,
+            in 0x3F50 until 0x3F60,
+            in 0x3F70 until 0x3F80,
+            in 0x3F90 until 0x3FA0,
+            in 0x3FB0 until 0x3FC0,
+            in 0x3FD0 until 0x3FE0,
+            in 0x3FF0 .. 0x3FFF
+            -> { // スプライトパレット TODO $3F00/$3F04/$3F08/$3F0Cのミラーの実装
+                0
+            }
+
+            else -> error("ppu internal: ${ppuMemAddress.value.toString(16)} address out of bounds")
+        }
+        ppuMemAddress.increment()
+    }
+
+    private var cycleAmount = 0
+    private var lineAmount = 0
+    fun run(cycle: Int) {
+        cycleAmount += cycle
+        lineAmount = cycleAmount / 341
+        if (lineAmount > 262) {
+            lineAmount = 0
+            cycleAmount = 0
+            for (y in 0 until 240) {
+                for (x in 0 until 256) {
+                    val paletteIndex = attributeTables[0][y / 32 * 8 + x / 32].toInt() and 0xFF
+                    val colorIndex = getPixelData(x, y)
+                    val pixelColor = bgPaletteTables[paletteIndex][colorIndex]
+                    screen.data[y * 256 + x] = colors[pixelColor.toInt() and 0xFF]
+                }
+            }
+            screen.isReady.value = true
+        }
+    }
+
+    private fun getPixelData(x: Int, y: Int) : Int {
+        val tileId = nameTables[0][y / 8 * 32 + x / 8].toInt() and 0xFF
+        val tileDataAddress : Address = ctrlRegister1.getBGPatternTableAddress()
+        tileDataAddress += tileId * 16
+        val tileDataOffset = (y % 8).toByte()
+        val tileDataLow = cartridge.readChrRom(tileDataAddress + tileDataOffset).toInt() and 0xFF
+        val tileDataHigh = cartridge.readChrRom(tileDataAddress + 8 + tileDataOffset).toInt() and 0xFF
+        return (((tileDataHigh ushr (7 - x % 8)) and 1) shl 1) or ((tileDataLow ushr (7 - x % 8)) and 1)
     }
 }
