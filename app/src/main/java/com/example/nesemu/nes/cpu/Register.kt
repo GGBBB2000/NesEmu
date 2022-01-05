@@ -7,7 +7,7 @@ sealed class Register {
     class X(var value: Byte = 0.toByte()): Register()
     class Y(var value: Byte = 0.toByte()): Register()
 
-    class SP(private var address: Address): Register() {
+    class SP(var address: Address): Register() {
         operator fun plusAssign(arg: Int) {
             this.address += arg
         }
