@@ -7,6 +7,10 @@ class Nes(cartridge: Cartridge) {
     private val bus = Bus(cartridge, ppu)
     private val cpu = Cpu(bus)
 
+    fun reset() {
+        cpu.reset()
+    }
+
     fun run() {
         var totalCycle = 0
         while (totalCycle < 341 * 262) {

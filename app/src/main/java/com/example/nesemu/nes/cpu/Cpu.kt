@@ -13,6 +13,17 @@ class Cpu(val bus: Bus) : IODevice {
     val sp = Register.SP(Address.buildAddress(0x01, 0xFF))
     val p = Register.P()
 
+    fun reset() {
+        a.value = 0
+        x.value = 0
+        y.value = 0
+        sp.setAddress(0xFF.toByte())
+        p.setFlag(0)
+        val pcLow = read(Address.buildAddress(0xFFFC)).toInt()
+        val pcHigh = read(Address.buildAddress(0xFFFD)).toInt()
+        pc.address = Address.Companion.buildAddress(pcHigh, pcLow)
+    }
+
     override fun read(address: Address): Byte = bus.read(address)
 
     override fun write(address: Address, data: Byte) = bus.write(address, data)
