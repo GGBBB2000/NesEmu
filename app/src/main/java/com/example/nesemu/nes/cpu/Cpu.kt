@@ -68,7 +68,7 @@ class Cpu(val bus: Bus) : IODevice {
             //BCS
             //BEQ
             //BNE
-            0xD0 -> InstructionInfo(0xD0.toByte(), BNE(pc, p, read(pc.address++)), 2) // +1 or 2 ブランチで+1 ページクロスで+2
+            0xD0 -> InstructionInfo(0xD0.toByte(), BNE(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BVC
             //BVS
             //BPL
@@ -98,12 +98,12 @@ class Cpu(val bus: Bus) : IODevice {
             //SED
             //CLV
             //LDA
-            0xA9 -> InstructionInfo(0xA9.toByte(), LDA(read(pc.address++), a, p), 2)
+            0xA9 -> InstructionInfo(0xA9.toByte(), LDA(getImmediateValue(), a, p), 2)
             0xBD -> InstructionInfo(0xBD.toByte(), LDA(read(getXIndexedAbsoluteAddress()), a, p), 4) // ページクロスで+1
             //LDX
-            0xA2 -> InstructionInfo(0xA2.toByte(), LDX(read(pc.address++), x, p), 2)
+            0xA2 -> InstructionInfo(0xA2.toByte(), LDX(getImmediateValue(), x, p), 2)
             //LDY
-            0xA0 -> InstructionInfo(0xA0.toByte(), LDY(read(pc.address++), y, p), 2)
+            0xA0 -> InstructionInfo(0xA0.toByte(), LDY(getImmediateValue(), y, p), 2)
             //STA
             0x8D -> InstructionInfo(0x8D.toByte(), STA(a, getAbsoluteAddress(), bus), 4)
             //STX
