@@ -34,9 +34,17 @@ class Cpu(val bus: Bus) : IODevice {
         return Address.buildAddress(upper.toInt(), lower.toInt())
     }
 
+    private fun getImmediateValue() = read(pc.address++)
+
     private fun getXIndexedAbsoluteAddress() : Address = getAbsoluteAddress() + x.value
 
     private fun getYIndexedAbsoluteAddress() : Address = getAbsoluteAddress() + y.value
+
+    private fun getZeroPageAddress(data: Byte) : Address = Address.buildAddress(0, data.toInt())
+
+    private fun getZeroPageXIndexedAddress() : Address = Address.buildAddress(0, getImmediateValue() + x.value)
+
+    private fun getZeroPageYIndexedAddress() : Address = Address.buildAddress(0, getImmediateValue() + y.value)
 
     fun run() : Int {
         val instInfo = fetch()
