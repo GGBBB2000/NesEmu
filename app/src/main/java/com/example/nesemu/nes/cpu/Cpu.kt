@@ -76,6 +76,7 @@ class Cpu(val bus: Bus) : IODevice {
             //BVC
             //BVS
             //BPL
+            0x10 -> InstructionInfo(0x10, BPL(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BMI
             //BIT
             //JMP
