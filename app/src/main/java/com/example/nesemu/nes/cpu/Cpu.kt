@@ -86,6 +86,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //JSR
             0x20 -> InstructionInfo(0x20, JSR(pc, sp, getAbsoluteAddress(), bus), 6)
             //RTS
+            0x60 -> InstructionInfo(0x60, RTS(pc, sp, bus), 6)
             //BRK
             //RTI
             //CMP
