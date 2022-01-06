@@ -6,22 +6,26 @@ import com.example.nesemu.nes.util.IODevice
 import com.example.nesemu.nes.util.Address
 
 class Cpu(val bus: Bus) : IODevice {
-    val a = Register.A()
-    val x = Register.X()
-    val y = Register.Y()
-    val pc = Register.PC(Address.buildAddress(0x80, 0x00))
-    val sp = Register.SP(Address.buildAddress(0x01, 0xFF))
-    val p = Register.P()
+    lateinit var a : Register.A
+    lateinit var x : Register.X
+    lateinit var y : Register.Y
+    lateinit var pc: Register.PC
+    lateinit var sp: Register.SP
+    lateinit var p: Register.P
+
+    init {
+        reset()
+    }
 
     fun reset() {
-        a.value = 0
-        x.value = 0
-        y.value = 0
-        sp.setAddress(0xFF.toByte())
-        p.setFlag(0)
+        a = Register.A()
+        x = Register.X()
+        y = Register.Y()
+        sp = Register.SP(Address.buildAddress(0x01FF))
+        p = Register.P()
         val pcLow = read(Address.buildAddress(0xFFFC)).toInt()
         val pcHigh = read(Address.buildAddress(0xFFFD)).toInt()
-        pc.address = Address.Companion.buildAddress(pcHigh, pcLow)
+        pc = Register.PC(Address.buildAddress(pcHigh, pcLow))
     }
 
     override fun read(address: Address): Byte = bus.read(address)
