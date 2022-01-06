@@ -1,12 +1,9 @@
 package com.example.nesemu.nes.cpu.instruction
 
-import android.location.Address
 import com.example.nesemu.nes.Bus
 import com.example.nesemu.nes.cpu.Register
+import com.example.nesemu.nes.util.Address
 
-class STX(x: Register.X, dest: Address, bus: Bus) : Instruction() {
-    override fun exec() {
-        TODO("Not yet implemented")
-    }
-
+class STX(val x: Register.X, val dest: Address, val bus: Bus) : Instruction() {
+    override fun exec() = bus.write(dest, x.value)
 }
