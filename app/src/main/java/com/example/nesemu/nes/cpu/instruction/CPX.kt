@@ -2,8 +2,11 @@ package com.example.nesemu.nes.cpu.instruction
 
 import com.example.nesemu.nes.cpu.Register
 
-class CPX(data: Byte, x: Register.X, p:Register.P) : Instruction() {
+class CPX(val data: Byte, val x: Register.X, val p:Register.P) : Instruction() {
     override fun exec() {
-        TODO("Not yet implemented")
+        val result = x.value - data
+        p.negative = result < 0
+        p.zero = result == 0
+        p.carry = !p.negative || p.zero
     }
 }

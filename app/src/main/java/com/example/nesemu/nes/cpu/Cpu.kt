@@ -90,6 +90,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //RTI
             //CMP
             //CPX
+            0xE0 -> InstructionInfo(0xE0.toByte(), CPX(getImmediateValue(), x, p), 2)
             //CPY
             //INC
             //DEC
