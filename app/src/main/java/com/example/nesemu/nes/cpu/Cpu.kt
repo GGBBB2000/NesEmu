@@ -46,7 +46,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
 
     private fun getYIndexedAbsoluteAddress() : Address = getAbsoluteAddress() + y.value
 
-    private fun getZeroPageAddress(data: Byte) : Address = Address.buildAddress(0, data.toInt())
+    private fun getZeroPageAddress() : Address = Address.buildAddress(0, getImmediateValue().toInt())
 
     private fun getZeroPageXIndexedAddress() : Address = Address.buildAddress(0, getImmediateValue() + x.value)
 
@@ -118,8 +118,9 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //LDY
             0xA0 -> InstructionInfo(0xA0.toByte(), LDY(getImmediateValue(), y, p), 2)
             //STA
-            0x8D -> InstructionInfo(0x8D.toByte(), STA(a, getAbsoluteAddress(), bus), 4)
+            0x85 -> InstructionInfo(0x85.toByte(), STA(a, getZeroPageAddress(), bus), 3)
             0x95 -> InstructionInfo(0x95.toByte(), STA(a, getZeroPageXIndexedAddress(), bus), 4)
+            0x8D -> InstructionInfo(0x8D.toByte(), STA(a, getAbsoluteAddress(), bus), 4)
             //STX
             0x8E -> InstructionInfo(0x8E.toByte(), STX(x, getAbsoluteAddress(), bus), 4)
             //STY
