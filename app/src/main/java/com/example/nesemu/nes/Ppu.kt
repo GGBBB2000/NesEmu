@@ -5,7 +5,7 @@ import com.example.nesemu.nes.cartridge.Cartridge
 import com.example.nesemu.nes.util.Address
 import com.example.nesemu.nes.util.IODevice
 
-class Ppu(private val cartridge: Cartridge) : IODevice {
+class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     private val ctrlRegister1 = CtrlRegister1()
     private val ctrlRegister2 = CtrlRegister2()
     private val status = PpuStatus()
@@ -101,7 +101,23 @@ class Ppu(private val cartridge: Cartridge) : IODevice {
     }
 
     // TODO PPUの読み込み時は0x2005のアドレス書き込み順序がリセットされる
-    data class PpuStatus(var data: Byte = 0) {}
+    private class PpuStatus {
+        private var data: Byte = 0
+
+        fun read() : Byte {
+            val ret = data
+            setVBlank(false)
+            return ret
+        }
+
+        fun setVBlank(flag: Boolean) {
+            data = if (flag) {
+                ((data.toInt() and 0xFF) or (0b1000_0000)).toByte()
+            } else {
+                ((data.toInt() and 0b0110_0000)).toByte()
+            }
+        }
+    }
 
     val colors: Array<Int> = arrayOf(
         0xFF808080.toInt(), 0xFF003DA6.toInt(), 0xFF0012B0.toInt(), 0xFF440096.toInt(),
@@ -124,7 +140,7 @@ class Ppu(private val cartridge: Cartridge) : IODevice {
 
     override fun read(address: Address): Byte {
         return when (address.value) {
-            0x2002 -> status.data
+            0x2002 -> status.read()
             0x2004 -> 0 // TODO impl sprite mem data
             0x2007 -> readInternalMemory()
             else -> error("ppu read: ${address.value.toString(16)} Illegal Access")
@@ -266,6 +282,12 @@ class Ppu(private val cartridge: Cartridge) : IODevice {
     private var lineAmount = 0
     fun run(cycle: Int) {
         cycleAmount += cycle
+        if (lineAmount == 239 && cycleAmount / 341 == 240) {
+            if (ctrlRegister1.isNMIEnable()) {
+                nmi.interrupt = true
+            }
+            status.setVBlank(true)
+        }
         lineAmount = cycleAmount / 341
         if (lineAmount > 262) {
             lineAmount = 0

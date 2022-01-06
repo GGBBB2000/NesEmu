@@ -1,11 +1,12 @@
 package com.example.nesemu.nes.cpu
 
 import com.example.nesemu.nes.Bus
+import com.example.nesemu.nes.NMI
 import com.example.nesemu.nes.cpu.instruction.*
 import com.example.nesemu.nes.util.IODevice
 import com.example.nesemu.nes.util.Address
 
-class Cpu(val bus: Bus) : IODevice {
+class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
     lateinit var a : Register.A
     lateinit var x : Register.X
     lateinit var y : Register.Y
@@ -26,6 +27,7 @@ class Cpu(val bus: Bus) : IODevice {
         val pcLow = read(Address.buildAddress(0xFFFC)).toInt()
         val pcHigh = read(Address.buildAddress(0xFFFD)).toInt()
         pc = Register.PC(Address.buildAddress(pcHigh, pcLow))
+        nmi.interrupt = false
     }
 
     override fun read(address: Address): Byte = bus.read(address)

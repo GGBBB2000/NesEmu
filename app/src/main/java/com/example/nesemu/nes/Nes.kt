@@ -4,9 +4,10 @@ import com.example.nesemu.nes.cartridge.Cartridge
 import com.example.nesemu.nes.cpu.Cpu
 
 class Nes(cartridge: Cartridge) {
-    private val ppu = Ppu(cartridge)
+    private val nmi = NMI()
+    private val ppu = Ppu(cartridge, nmi)
     private val bus = Bus(cartridge, ppu)
-    private val cpu = Cpu(bus)
+    private val cpu = Cpu(bus, nmi)
 
     fun reset() {
         cpu.reset()
