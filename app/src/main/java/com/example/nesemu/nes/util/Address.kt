@@ -37,6 +37,11 @@ class Address private constructor(data: Int) {
         this.value %= arg
     }
 
+    operator fun rem(arg: Int) : Address {
+        val newAddress = this.value % arg
+        return Address(newAddress)
+    }
+
     operator fun inc() : Address = Address(value + 1)
 
     operator fun dec() : Address = Address(value - 1)
