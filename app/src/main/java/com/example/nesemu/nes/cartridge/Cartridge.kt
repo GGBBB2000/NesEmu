@@ -1,9 +1,9 @@
-package com.example.nesemu.nes
+package com.example.nesemu.nes.cartridge
 
+import com.example.nesemu.nes.Rom
 import com.example.nesemu.nes.util.Address
-import com.example.nesemu.nes.util.IODevice
 
-class Cartridge private constructor(private val header: INes, private val prgRom: Rom, private val chrRom: Rom) {
+abstract class Cartridge/* private constructor(private val header: INes, private val prgRom: Rom, private val chrRom: Rom)*/ {
     companion object {
         fun getCartridge(cartridgeData: ByteArray): Cartridge {
             val headerSize = 16;
@@ -17,13 +17,14 @@ class Cartridge private constructor(private val header: INes, private val prgRom
             val prgRom = cartridgeData.slice(headerSize until (headerSize + prgRomSize)).toByteArray()
             val chrRom = cartridgeData.slice((headerSize + prgRomSize) until (headerSize + prgRomSize + charRomSize)).toByteArray()
             val iNes = INes(nesString, headerData[4], headerData[5], headerData[6], headerData[7], headerData[8], headerData[9], headerData[10])
-            return Cartridge(iNes, Rom(prgRom), Rom(chrRom))
+            val mapper = (headerData[7].toInt() and 0xFF) or ((headerData[6].toInt() and 0xFF) ushr 4)
+            return Mapper0(iNes, Rom(prgRom), Rom(chrRom))
         }
     }
 
-    fun readPrgRom(address: Address): Byte = this.prgRom.read(address)
+    abstract fun readPrgRom(address: Address): Byte// = this.prgRom.read(address)
 
-    fun readChrRom(address: Address): Byte = this.chrRom.read(address)
+    abstract fun readChrRom(address: Address): Byte// = this.chrRom.read(address)
 
     data class INes(val nes: String,
                     val prgSize: Byte,

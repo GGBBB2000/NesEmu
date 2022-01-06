@@ -1,5 +1,6 @@
 package com.example.nesemu.nes
 
+import com.example.nesemu.nes.cartridge.Cartridge
 import com.example.nesemu.nes.util.Address
 import com.example.nesemu.nes.util.IODevice
 
@@ -8,24 +9,12 @@ class Bus(private val cartridge: Cartridge, val ppu: Ppu) : IODevice {
 
     override fun read(address: Address): Byte {
         return when(address.value) {
-            in 0x0000 until 0x800 -> ram.read(address)
-            in 0x800 until 0x2000 -> { // RAM ミラー 1~3
-                address -= 0x800
-                address %= 0x800
-                ram.read(address)
-            }
+            in 0x0000 until 0x2000 -> ram.read(address % 0x800) // RAMとそのミラー1~3
             in 0x2000 until 0x2007 -> ppu.read(address)
             // in 0x4000 until 0x4020 apu pad
             // in 0x4020 until 0x6000 ext rom
             // in 0x6000 until 0x8000 ext ram
-            in 0x8000 until 0xC000 -> {
-                address -= 0x8000
-                cartridge.readPrgRom(address)
-            }
-            in 0xC000..0xFFFF -> {
-                address -= 0x8000
-                cartridge.readPrgRom(address)
-            }
+            in 0x8000 .. 0xFFFF -> cartridge.readPrgRom(address % 0x8000)
             else -> error("read ${address.value} out of bounds")
         }
     }

@@ -1,6 +1,7 @@
 package com.example.nesemu.nes
 
 import androidx.lifecycle.MutableLiveData
+import com.example.nesemu.nes.cartridge.Cartridge
 import com.example.nesemu.nes.util.Address
 import com.example.nesemu.nes.util.IODevice
 

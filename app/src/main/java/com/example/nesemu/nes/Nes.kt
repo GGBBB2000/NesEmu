@@ -1,5 +1,6 @@
 package com.example.nesemu.nes
 
+import com.example.nesemu.nes.cartridge.Cartridge
 import com.example.nesemu.nes.cpu.Cpu
 
 class Nes(cartridge: Cartridge) {
