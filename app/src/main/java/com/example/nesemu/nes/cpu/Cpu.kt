@@ -97,6 +97,7 @@ class Cpu(val bus: Bus) : IODevice {
             //SEC
             0x78 -> InstructionInfo(0x78, SEI(p), 2)
             //CLD
+            0xd8 -> InstructionInfo(0xd8.toByte(), CLD(p), 2)
             //SED
             //CLV
             //LDA
