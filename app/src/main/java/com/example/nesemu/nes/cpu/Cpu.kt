@@ -77,6 +77,7 @@ class Cpu(val bus: Bus) : IODevice {
             //JMP
             0x4C -> InstructionInfo(0x4C, JMP(getAbsoluteAddress(), pc), 3)
             //JSR
+            0x20 -> InstructionInfo(0x20, JSR(pc, sp, getAbsoluteAddress(), bus), 6)
             //RTS
             //BRK
             //RTI
@@ -88,6 +89,7 @@ class Cpu(val bus: Bus) : IODevice {
             //INX
             0xE8 -> InstructionInfo(0xE8.toByte(), INX(x, p),2)
             //DEX
+            0xCA -> InstructionInfo(0xCA.toByte(), DEX(x, p), 2)
             //INY
             //DEY
             0x88 -> InstructionInfo(0x88.toByte(), DEY(y, p), 2)
