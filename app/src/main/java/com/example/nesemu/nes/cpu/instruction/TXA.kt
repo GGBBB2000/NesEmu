@@ -4,9 +4,11 @@ import android.location.Address
 import com.example.nesemu.nes.Bus
 import com.example.nesemu.nes.cpu.Register
 
-class TXA(a: Register.A, x: Register.X, p: Register.P) : Instruction() {
+class TXA(val a: Register.A, val x: Register.X, val p: Register.P) : Instruction() {
     override fun exec() {
-        TODO("Not yet implemented")
+        a.value = x.value
+        p.negative = x.value.toInt() < 0
+        p.zero = x.value.toInt() == 0
     }
 
 }
