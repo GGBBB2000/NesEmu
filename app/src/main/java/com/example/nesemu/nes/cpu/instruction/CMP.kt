@@ -2,8 +2,11 @@ package com.example.nesemu.nes.cpu.instruction
 
 import com.example.nesemu.nes.cpu.Register
 
-class CMP(data: Byte, a: Register.A, p:Register.P) : Instruction() {
+class CMP(val data: Byte, val a: Register.A, val p:Register.P) : Instruction() {
     override fun exec() {
-        TODO("Not yet implemented")
+        val result = a.value - data
+        p.negative = result < 0
+        p.zero = result == 0
+        p.carry = !p.negative || p.zero
     }
 }
