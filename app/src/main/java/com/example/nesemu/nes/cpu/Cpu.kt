@@ -86,7 +86,9 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //EOR
             //ASL
             //LSR
+            0x4A -> InstructionInfo(0x4A, LSR(a, null, p, bus), 2)
             //ROL
+            0x26 -> InstructionInfo(0x26, ROL(a, getZeroPageAddress(), p, bus), 5)
             //ROR
             //BCC
             //BCS
