@@ -294,7 +294,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
             cycleAmount = 0
             for (y in 0 until 240) {
                 for (x in 0 until 256) {
-                    val paletteIndex = attributeTables[0][y / 32 * 8 + x / 32].toInt() and 0xFF
+                    val paletteIndex = getPaletteIndex(x, y)
                     val colorIndex = getPixelData(x, y)
                     val pixelColor = bgPaletteTables[paletteIndex][colorIndex]
                     screen.data[y * 256 + x] = colors[pixelColor.toInt() and 0xFF]
@@ -302,6 +302,19 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
             }
             screen.isReady.value = true
         }
+    }
+
+    private fun getPaletteIndex(x: Int, y: Int) : Int {
+        val palettes = attributeTables[0][y / 32 * 8 + x / 32].toInt() and 0xFF
+        return if (x % 32 < 16 && y % 32 < 16) {
+            (palettes and 0b1100_0000) ushr 6
+        } else if (x % 32 >= 16 && y % 32 < 16) {
+            (palettes and 0b0011_0000) ushr 4
+        } else if (x % 32 < 16 && y % 32 >= 16){
+            (palettes and 0b0000_1100) ushr 2
+        } else {
+            (palettes and 0b0000_0011)
+        } and 0b11
     }
 
     private fun getPixelData(x: Int, y: Int) : Int {
