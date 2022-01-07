@@ -117,6 +117,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //CLV
             //LDA
             0xA9 -> InstructionInfo(0xA9.toByte(), LDA(getImmediateValue(), a, p), 2)
+            0xA5 -> InstructionInfo(0xA9.toByte(), LDA(read(getZeroPageAddress()), a, p), 3)
             0xAD -> InstructionInfo(0xAD.toByte(), LDA(read(getAbsoluteAddress()), a, p), 4)
             0xBD -> InstructionInfo(0xBD.toByte(), LDA(read(getXIndexedAbsoluteAddress()), a, p), 4) // ページクロスで+1
             0xB9 -> InstructionInfo(0xBD.toByte(), LDA(read(getYIndexedAbsoluteAddress()), a, p), 4) // ページクロスで+1
