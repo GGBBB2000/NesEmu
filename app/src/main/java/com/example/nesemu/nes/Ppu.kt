@@ -284,7 +284,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
         cycleAmount += cycle
         if (lineAmount == 239 && cycleAmount / 341 == 240) {
             if (ctrlRegister1.isNMIEnable()) {
-                nmi.interrupt = true
+                nmi.hasInterrupt = true
             }
             status.setVBlank(true)
         }

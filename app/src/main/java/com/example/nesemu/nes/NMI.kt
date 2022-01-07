@@ -1,3 +1,3 @@
 package com.example.nesemu.nes
 
-data class NMI(var interrupt: Boolean = false)
+data class NMI(var hasInterrupt: Boolean = false)

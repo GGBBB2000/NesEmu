@@ -27,7 +27,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
         val pcLow = read(Address.buildAddress(0xFFFC)).toInt()
         val pcHigh = read(Address.buildAddress(0xFFFD)).toInt()
         pc = Register.PC(Address.buildAddress(pcHigh, pcLow))
-        nmi.interrupt = false
+        nmi.hasInterrupt = false
     }
 
     override fun read(address: Address): Byte = bus.read(address)
@@ -54,11 +54,26 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
 
     private fun getIndirectYAddress() : Address = getZeroPageAddress() + y.value
 
-
     fun run() : Int {
+        if (nmi.hasInterrupt) {
+            p.breakFlag = false
+            handleInterrupt(Address.buildAddress(0xFFFB), Address.buildAddress(0xFFFA))
+            nmi.hasInterrupt = false
+            return 8
+        }
         val instInfo = fetch()
         instInfo.inst.exec()
         return instInfo.cycle
+    }
+
+    private fun handleInterrupt(addressHigh: Address, addressLow : Address) {
+        write(sp.address--, ((pc.address.value and 0xFF00) ushr 8).toByte())
+        write(sp.address--, ((pc.address.value and 0xFF).toByte()))
+        write(sp.address--, p.toByte())
+        p.interrupt = true
+        val pcLow = read(addressLow).toInt()
+        val pcHigh = read(addressHigh).toInt()
+        pc.address = Address.buildAddress(pcHigh, pcLow)
     }
 
     private fun fetch() : InstructionInfo {
