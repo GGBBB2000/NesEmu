@@ -95,6 +95,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //RTI
             //CMP
             0xC9 -> InstructionInfo(0xC9.toByte(), CMP(getImmediateValue(), a, p), 2)
+            0xC5 -> InstructionInfo(0xC9.toByte(), CMP(read(getZeroPageAddress()), a, p), 3)
             //CPX
             0xE0 -> InstructionInfo(0xE0.toByte(), CPX(getImmediateValue(), x, p), 2)
             //CPY
