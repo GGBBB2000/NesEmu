@@ -115,6 +115,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0xE0 -> InstructionInfo(0xE0.toByte(), CPX(getImmediateValue(), x, p), 2)
             //CPY
             //INC
+            0xE6 -> InstructionInfo(0xE6.toByte(), INC(p, getZeroPageAddress(), bus), 5)
             //DEC
             0xC6 -> InstructionInfo(0xC6.toByte(), DEC(p, getZeroPageAddress(), bus), 5)
             //INX
