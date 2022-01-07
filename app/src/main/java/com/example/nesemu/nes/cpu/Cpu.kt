@@ -76,6 +76,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //BCC
             //BCS
             //BEQ
+            0xF0 -> InstructionInfo(0xF0.toByte(), BEQ(pc, p, getImmediateValue()), 2)
             //BNE
             0xD0 -> InstructionInfo(0xD0.toByte(), BNE(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BVC
