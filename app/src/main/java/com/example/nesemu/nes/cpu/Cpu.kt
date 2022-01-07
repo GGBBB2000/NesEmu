@@ -127,6 +127,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0xA2 -> InstructionInfo(0xA2.toByte(), LDX(getImmediateValue(), x, p), 2)
             //LDY
             0xA0 -> InstructionInfo(0xA0.toByte(), LDY(getImmediateValue(), y, p), 2)
+            0xA4 -> InstructionInfo(0xA4.toByte(), LDY(read(getZeroPageAddress()), y, p), 3)
             //STA
             0x85 -> InstructionInfo(0x85.toByte(), STA(a, getZeroPageAddress(), bus), 3)
             0x95 -> InstructionInfo(0x95.toByte(), STA(a, getZeroPageXIndexedAddress(), bus), 4)
