@@ -170,6 +170,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //PHA
             0x48 -> InstructionInfo(0x48, PHA(a, sp, bus), 3)
             //PLA
+            0x68 -> InstructionInfo(0x68.toByte(), PLA(a, sp, p, bus), 4)
             //PHP
             //PLP
 
