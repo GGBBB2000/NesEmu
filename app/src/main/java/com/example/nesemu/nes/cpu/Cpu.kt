@@ -79,7 +79,8 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
     private fun fetch() : InstructionInfo {
         val opcode = read(pc.address++).toInt() and 0xFF
         return when (opcode) {
-            // ADC
+            //ADC
+            0x69 -> InstructionInfo(0x69.toByte(), ADC(getImmediateValue(), a, p), 2)
             //SBC
             //AND
             0x25 -> InstructionInfo(0x25.toByte(), AND(read(getZeroPageAddress()), a, p), 3)
