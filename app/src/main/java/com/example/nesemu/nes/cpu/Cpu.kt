@@ -155,6 +155,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0x8D -> InstructionInfo(0x8D.toByte(), STA(a, getAbsoluteAddress(), bus), 4)
             0x91 -> InstructionInfo(0x91.toByte(), STA(a, getIndirectYAddress(), bus), 5) // ページクロスで +1
             //STX
+            0x86 -> InstructionInfo(0x86.toByte(), STX(x, getZeroPageAddress(), bus), 3)
             0x8E -> InstructionInfo(0x8E.toByte(), STX(x, getAbsoluteAddress(), bus), 4)
             //STY
             0x8C -> InstructionInfo(0x8C.toByte(), STY(y, getAbsoluteAddress(), bus), 4)
