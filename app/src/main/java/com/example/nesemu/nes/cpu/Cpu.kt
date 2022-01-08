@@ -95,6 +95,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //ROR
             //BCC
             //BCS
+            0xB0 -> InstructionInfo(0xB0.toByte(), BCS(pc,  p, getImmediateValue()), 2)
             //BEQ
             0xF0 -> InstructionInfo(0xF0.toByte(), BEQ(pc, p, getImmediateValue()), 2)
             //BNE
