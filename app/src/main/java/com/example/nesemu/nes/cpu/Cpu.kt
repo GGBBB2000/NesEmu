@@ -157,6 +157,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //STY
             0x8C -> InstructionInfo(0x8C.toByte(), STY(y, getAbsoluteAddress(), bus), 4)
             //TAX
+            0xAA -> InstructionInfo(0xAA.toByte(), TAX(a, x, p), 2)
             //TXA
             0x8A -> InstructionInfo(0x8A.toByte(), TXA(a, x, p), 2)
             //TAY

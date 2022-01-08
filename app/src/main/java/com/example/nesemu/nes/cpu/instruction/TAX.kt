@@ -1,12 +1,12 @@
 package com.example.nesemu.nes.cpu.instruction
 
-import android.location.Address
-import com.example.nesemu.nes.Bus
 import com.example.nesemu.nes.cpu.Register
 
-class TAX(a: Register.A, x: Register.X, p: Register.P) : Instruction() {
+class TAX(val a: Register.A, val x: Register.X, val p: Register.P) : Instruction() {
     override fun exec() {
-        TODO("Not yet implemented")
+        x.value = a.value
+        p.negative = x.value.toInt() < 0
+        p.zero = x.value.toInt() == 0
     }
 
 }
