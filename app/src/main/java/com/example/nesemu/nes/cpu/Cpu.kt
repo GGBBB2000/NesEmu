@@ -84,6 +84,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //AND
             //ORA
             //EOR
+            0x45 -> InstructionInfo(0x45.toByte(), EOR(read(getZeroPageAddress()), a, p), 3)
             //ASL
             //LSR
             0x4A -> InstructionInfo(0x4A, LSR(a, null, p, bus), 2)
