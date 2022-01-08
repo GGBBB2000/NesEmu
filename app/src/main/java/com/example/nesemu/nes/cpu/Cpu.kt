@@ -82,6 +82,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             // ADC
             //SBC
             //AND
+            0x25 -> InstructionInfo(0x25.toByte(), AND(read(getZeroPageAddress()), a, p), 3)
             //ORA
             //EOR
             0x45 -> InstructionInfo(0x45.toByte(), EOR(read(getZeroPageAddress()), a, p), 3)
