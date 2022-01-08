@@ -112,6 +112,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0x60 -> InstructionInfo(0x60, RTS(pc, sp, bus), 6)
             //BRK
             //RTI
+            0x40 -> InstructionInfo(0x40.toByte(), RTI(pc, sp, p, bus), 6)
             //CMP
             0xC9 -> InstructionInfo(0xC9.toByte(), CMP(getImmediateValue(), a, p), 2)
             0xC5 -> InstructionInfo(0xC9.toByte(), CMP(read(getZeroPageAddress()), a, p), 3)
