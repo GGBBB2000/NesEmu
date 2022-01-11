@@ -167,11 +167,11 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
                 readSyncBuffer
             }
             in 0x2000 until 0x23C0, in 0x3000 until 0x33C0 -> { // ネームテーブル0 と　ミラー
-                readSyncBuffer = nameTables[0][ppuMemAddress.value % 0x2000]
+                readSyncBuffer = nameTables[0][ppuMemAddress.value % 0x3000 % 0x2000]
                 readSyncBuffer
             }
             in 0x23C0 until 0x2400, in 0x33C0 until 0x3400 -> { // 属性テーブル0 と　ミラー
-                readSyncBuffer = attributeTables[0][ppuMemAddress.value]
+                readSyncBuffer = attributeTables[0][ppuMemAddress.value % 0x33C0 % 0x23C0]
                 readSyncBuffer
             }
             in 0x2400 until 0x27C0, in 0x3400 until 0x37C0 -> { // ネームテーブル1 まとめて書いてもいいけど，ミラーリングの実装を待つ
@@ -283,15 +283,6 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     fun run(cycle: Int) {
         cycleAmount += cycle
         if (lineAmount == 239 && cycleAmount / 341 == 240) {
-            if (ctrlRegister1.isNMIEnable()) {
-                nmi.hasInterrupt = true
-            }
-            status.setVBlank(true)
-        }
-        lineAmount = cycleAmount / 341
-        if (lineAmount > 262) {
-            lineAmount = 0
-            cycleAmount = 0
             for (y in 0 until 240) {
                 for (x in 0 until 256) {
                     val paletteIndex = getPaletteIndex(x, y)
@@ -301,6 +292,15 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
                 }
             }
             screen.isReady.value = true
+            if (ctrlRegister1.isNMIEnable()) {
+                nmi.hasInterrupt = true
+            }
+            status.setVBlank(true)
+        }
+        lineAmount = cycleAmount / 341
+        if (lineAmount > 262) {
+            lineAmount = 0
+            cycleAmount = 0
         }
     }
 
