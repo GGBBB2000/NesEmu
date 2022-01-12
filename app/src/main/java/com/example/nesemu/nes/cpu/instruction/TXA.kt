@@ -1,7 +1,5 @@
 package com.example.nesemu.nes.cpu.instruction
 
-import android.location.Address
-import com.example.nesemu.nes.Bus
 import com.example.nesemu.nes.cpu.Register
 
 class TXA(val a: Register.A, val x: Register.X, val p: Register.P) : Instruction() {
