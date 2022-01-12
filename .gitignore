@@ -14,3 +14,5 @@
 .cxx
 local.properties
 /app/src/main/assets/rom/
+/app/src/main/assets/rom/nes-disasm/
+/app/src/main/assets/rom/rustynes/

@@ -2,3 +2,6 @@
 /assets/rom/*
 /assets/rom/
 /assets/rom/*.nes
+/assets/rom/rustynes/
+/assets/rom/rustynes/roms/*.nes
+/assets/rom/rustynes/roms/
