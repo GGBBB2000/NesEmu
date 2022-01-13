@@ -15,6 +15,9 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     private val attributeTables = Array(4){Array<Byte>(0x40){0}}
     private val bgPaletteTables = Array(4){Array<Byte>(4){0}}
     private val chrPaletteTables = Array(4){Array<Byte>(4){0}}
+
+    private val objectAttributeMemory = Array(64){Sprite()}
+
     val screen = Screen(Array(256 * 240) {0xFF000000.toInt()}, MutableLiveData(false))
     // LiveDataは何書いてもObserverの処理が走るらしい...
     @Suppress("ArrayInDataClass")
@@ -22,6 +25,18 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
 
     private var readSyncBuffer: Byte = 0xFF.toByte() // CPUとPPU間の，データread時のクロック同期をとるためのバッファ
 
+    private class Sprite (var y: Int = -1, var index: Int = 0, var attribute: Byte = 0, var x: Int = 0) {
+        fun setData(dataIndex: Int, data: Byte) {
+            when (dataIndex) {
+                0 -> y = (data.toInt() and 0xFF) - 1
+                1 -> index = data.toInt() and 0xFF
+                2 -> attribute = data
+                3 -> x = data.toInt() and 0xFF
+            }
+        }
+
+        fun getColorPaletteIndex() : Int = attribute.toInt() and 0b11
+    }
 
     sealed class MemoryAddress {
         open var value: Int = 0
@@ -54,12 +69,20 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
         fun isNMIEnable() : Boolean = (data.toInt() and  0b1000_0000) != 0
 
         /**
-         * 戻り値 0: 8x8 1: 8x16
+         * スプライトの縦の長さを返す 8 or 16
          */
-        fun getSpriteSize() : Int = data.toInt() and 0b0010_0000 ushr 5
+        fun getSpriteSize() : Int = (data.toInt() and 0b0010_0000 ushr 5) * 8 + 8
 
         fun getBGPatternTableAddress() : Address {
             return if ((data.toInt() and 0b0001_0000 ushr 4) == 0) {
+                Address.buildAddress(0x0000)
+            } else {
+                Address.buildAddress(0x1000)
+            }
+        }
+
+        fun getSpritePatternTableAddress() : Address {
+            return if ((data.toInt() and 0b0000_1000 ushr 3) == 0) {
                 Address.buildAddress(0x0000)
             } else {
                 Address.buildAddress(0x1000)
@@ -148,12 +171,17 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     }
 
     override fun write(address: Address, data: Byte) {
-        //println("${data.toUByte().toString(16)} → 0x${ppuMemAddress.value.toString(16)}")
+        println("${data.toUByte().toString(16)} → 0x${address.value.toString(16)}")
         when (address.value) {
             0x2000 -> ctrlRegister1.data = data
             0x2001 -> ctrlRegister2.data = data
             0x2003 -> spriteMemAddress.value  = data.toInt() and 0xFF
-            0x2005 -> {} // TODO sprite palette
+            0x2004 -> {
+                val adder = spriteMemAddress.value
+                objectAttributeMemory[adder / 4].setData(adder % 4, data)
+                spriteMemAddress.increment()
+            }
+            0x2005 -> { /*TODO scroll offset*/ }
             0x2006 -> ppuMemAddress.value = data.toInt() and 0xFF
             0x2007 -> writeToInternalMemory(data)
         }
@@ -218,7 +246,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
             in 0x3FD0 until 0x3FE0,
             in 0x3FF0 .. 0x3FFF
             -> { // スプライトパレット TODO $3F00/$3F04/$3F08/$3F0Cのミラーの実装
-                0
+                chrPaletteTables[(ppuMemAddress.value - 0x3F10) % 0x10 / 4][(ppuMemAddress.value - 0x3F10) % 0x10 % 4]
             }
 
             else -> error("ppu internal: address out of bounds")
@@ -226,7 +254,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     }
 
     private fun writeToInternalMemory(data: Byte) {
-        println("${data.toUByte().toString(16)} → 0x${ppuMemAddress.value.toString(16)}")
+        println("(PPU Internal) ${data.toUByte().toString(16)} → 0x${ppuMemAddress.value.toString(16)}")
         when (ppuMemAddress.value) {
             in 0x2000 until 0x23C0, in 0x3000 until 0x33C0 -> { // ネームテーブル0 と　ミラー TODO ミラーのアドレス処理
                 nameTables[0][ppuMemAddress.value % 0x3000 % 0x2000] = data
@@ -269,9 +297,8 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
             in 0x3FB0 until 0x3FC0,
             in 0x3FD0 until 0x3FE0,
             in 0x3FF0 .. 0x3FFF
-            -> { // スプライトパレット TODO $3F00/$3F04/$3F08/$3F0Cのミラーの実装
-                0
-            }
+                // TODO $3F00/$3F04/$3F08/$3F0Cのミラーの実装
+            -> chrPaletteTables[(ppuMemAddress.value - 0x3F10) % 0x10 / 4][(ppuMemAddress.value - 0x3F10) % 0x10 % 4] = data
 
             else -> error("ppu internal: ${ppuMemAddress.value.toString(16)} address out of bounds")
         }
@@ -284,11 +311,21 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
         cycleAmount += cycle
         if (lineAmount == 239 && cycleAmount / 341 == 240) {
             for (y in 0 until 240) {
+                val spritesToRender = oamScan(y) // Object Attribute Memory これから描画するスプライトの情報
                 for (x in 0 until 256) {
                     val paletteIndex = getPaletteIndex(x, y)
-                    val colorIndex = getPixelData(x, y)
-                    val pixelColor = bgPaletteTables[paletteIndex][colorIndex]
+                    var colorIndex = getPixelData(x, y)
+                    var pixelColor = bgPaletteTables[paletteIndex][colorIndex]
                     screen.data[y * 256 + x] = colors[pixelColor.toInt() and 0xFF]
+                    if (spritesToRender.isNotEmpty()) {
+                        spritesToRender.filter { sprite -> sprite.x <= x && x < sprite.x + 8 }.takeLast(1).forEach {
+                            colorIndex = getSpriteColorIndex(it.index, x - it.x, y - (it.y + 1))
+                            if (colorIndex != 0) { // スプライトのパレットの先頭は透明色なので描画しない
+                                pixelColor = chrPaletteTables[it.getColorPaletteIndex()][colorIndex]
+                                screen.data[y * 256 + x] = colors[pixelColor.toInt() and 0xFF]
+                            }
+                        }
+                    }
                 }
             }
             screen.isReady.value = true
@@ -303,6 +340,12 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
             cycleAmount = 0
         }
     }
+
+    private fun oamScan(y: Int) = objectAttributeMemory.filter {
+        sprite -> sprite.y >= 0 // y 座標がマイナスのものは描画しない
+    }.filter {
+        sprite -> sprite.y + 1 <= y &&  y < sprite.y + 1 + ctrlRegister1.getSpriteSize()
+    }.take(8) // 1ラインに描画できるスプライトは8個まで
 
     private fun getPaletteIndex(x: Int, y: Int) : Int {
         val palettes = attributeTables[0][y / 32 * 8 + x / 32].toInt() and 0xFF
@@ -325,5 +368,13 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
         val tileDataLow = cartridge.readChrRom(tileDataAddress + tileDataOffset).toInt() and 0xFF
         val tileDataHigh = cartridge.readChrRom(tileDataAddress + 8 + tileDataOffset).toInt() and 0xFF
         return (((tileDataHigh ushr (7 - x % 8)) and 1) shl 1) or ((tileDataLow ushr (7 - x % 8)) and 1)
+    }
+
+    private fun getSpriteColorIndex(spriteIndex: Int, x: Int, y: Int) : Int {
+        val tileDataAddress = ctrlRegister1.getSpritePatternTableAddress()
+        tileDataAddress += spriteIndex * 8 + y // TODO 大きいサイズのスプライトの処理
+        val tileDataLow = cartridge.readChrRom(tileDataAddress).toInt() and 0xFF
+        val tileDataHigh = cartridge.readChrRom(tileDataAddress + 8).toInt() and 0xFF
+        return (((tileDataHigh ushr (7 - x)) and 1) shl 1) or ((tileDataLow ushr (7 - x)) and 1)
     }
 }
