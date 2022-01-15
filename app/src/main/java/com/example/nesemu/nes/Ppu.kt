@@ -328,7 +328,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
                     }
                 }
             }
-            screen.isReady.value = true
+            screen.isReady.postValue(true)
             if (ctrlRegister1.isNMIEnable()) {
                 nmi.hasInterrupt = true
             }
