@@ -10,10 +10,10 @@ class JoyPadTouchEventListener(private val button: JoyPad.Button, private val jo
     override fun onTouch(view: View, event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                joyPad.setButtonState(button, false)
+                joyPad.setButtonState(button, true)
             }
             MotionEvent.ACTION_UP -> {
-                joyPad.setButtonState(button, true)
+                joyPad.setButtonState(button, false)
             }
         }
         return false
