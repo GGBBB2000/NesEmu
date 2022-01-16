@@ -6,7 +6,8 @@ import com.example.nesemu.nes.cpu.Cpu
 class Nes(cartridge: Cartridge) {
     private val nmi = NMI()
     private val ppu = Ppu(cartridge, nmi)
-    private val bus = Bus(cartridge, ppu)
+    val joyPad = JoyPad()
+    private val bus = Bus(cartridge, ppu, joyPad)
     private val cpu = Cpu(bus, nmi)
 
     fun reset() {
