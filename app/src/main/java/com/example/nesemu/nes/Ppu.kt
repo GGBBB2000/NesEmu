@@ -321,7 +321,11 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
                     screen.data[y * 256 + x] = colors[pixelColor.toInt() and 0xFF]
                     if (spritesToRender.isNotEmpty()) {
                         spritesToRender.filter { sprite -> sprite.x <= x && x < sprite.x + 8 }.takeLast(1).forEach {
-                            colorIndex = getSpriteColorIndex(it.index, x - it.x, y - (it.y + 1))
+                            val verticalFlip = (it.attribute.toInt() and 0b1000_0000) != 0
+                            val horizontalFlip = (it.attribute.toInt() and 0b0100_0000) != 0
+                            val pixelX = if (horizontalFlip) 7 - (x - it.x) else x - it.x
+                            val pixelY = if (verticalFlip) 7 - (y - (it.y + 1)) else y - (it.y + 1)
+                            colorIndex = getSpriteColorIndex(it.index, pixelX, pixelY)
                             if (colorIndex != 0) { // スプライトのパレットの先頭は透明色なので描画しない
                                 pixelColor = chrPaletteTables[it.getColorPaletteIndex()][colorIndex]
                                 screen.data[y * 256 + x] = colors[pixelColor.toInt() and 0xFF]
