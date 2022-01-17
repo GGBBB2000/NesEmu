@@ -6,6 +6,7 @@ import com.example.nesemu.nes.util.IODevice
 
 class Bus(private val cartridge: Cartridge, val ppu: Ppu, val joyPad: JoyPad) : IODevice {
     private val ram = Ram(0x800)
+    var dmaLock = false
 
     override fun read(address: Address): Byte {
         return when(address.value) {
@@ -31,6 +32,7 @@ class Bus(private val cartridge: Cartridge, val ppu: Ppu, val joyPad: JoyPad) : 
             in 0x2000 until 0x2008 -> ppu.write(address, data)
             // in 0x2008 until 0x4000 ppu io mirror * 1023
             in 0x4000 .. 0x4013, 0x4015, 0x4017 -> {} // apu JoyPad2
+            0x4014 -> transferSpriteToPpu(data) // DMA
             0x4016 -> joyPad.write(address, data)
             // in 0x4020 until 0x6000 ext rom
             // in 0x6000 until 0x8000 ext ram
@@ -43,6 +45,14 @@ class Bus(private val cartridge: Cartridge, val ppu: Ppu, val joyPad: JoyPad) : 
                 //cartridge.read(address)
             }
             else -> error("write ${address.value} out of bounds")
+        }
+    }
+
+    private fun transferSpriteToPpu(addressHigh: Byte) {
+        dmaLock = true
+        var address = Address.buildAddress(addressHigh.toInt(), 0)
+        for (index in 0x0 until 0x100) {
+            ppu.writeSpriteData(index, read(address++))
         }
     }
 }

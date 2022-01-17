@@ -63,7 +63,13 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
         }
         val instInfo = fetch()
         instInfo.inst.exec()
-        return instInfo.cycle
+        return instInfo.cycle +
+                if (bus.dmaLock) {
+                    bus.dmaLock = false
+                    514
+                } else {
+                    0
+                }
     }
 
     private fun handleInterrupt(addressHigh: Address, addressLow : Address) {

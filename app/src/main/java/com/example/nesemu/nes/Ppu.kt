@@ -187,6 +187,8 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
         }
     }
 
+    fun writeSpriteData(index: Int, data: Byte) = objectAttributeMemory[index / 4].setData(index % 4, data)
+
     // PPUのパレット以外を読むときはreadSyncBuffer（１サイクル前）の値が返り，代わりにネームテーブル3?のミラーがバッファされる???
     private fun readInternalMemory() : Byte {
         return when (ppuMemAddress.value) {
