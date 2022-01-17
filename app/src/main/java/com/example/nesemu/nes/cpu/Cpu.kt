@@ -40,6 +40,10 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
         return Address.buildAddress(upper.toInt(), lower.toInt())
     }
 
+    private fun getAbsoluteXAddress() = getAbsoluteAddress() + x.value
+
+    private fun getAbsoluteYAddress() = getAbsoluteAddress() + y.value
+
     private fun getImmediateValue() = read(pc.address++)
 
     private fun getXIndexedAbsoluteAddress() : Address = getAbsoluteAddress() + x.value
@@ -158,6 +162,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0xBD -> InstructionInfo(0xBD.toByte(), LDA(read(getXIndexedAbsoluteAddress()), a, p), 4) // ページクロスで+1
             0xB9 -> InstructionInfo(0xBD.toByte(), LDA(read(getYIndexedAbsoluteAddress()), a, p), 4) // ページクロスで+1
             0xB1 -> InstructionInfo(0xB1.toByte(), LDA(read(getIndirectYAddress()), a, p), 5) // ページクロスで+1
+            0xBE -> InstructionInfo(0xBE.toByte(), LDA(read(getAbsoluteYAddress()), a, p), 4) // ページクロスで+1
             //LDX
             0xA2 -> InstructionInfo(0xA2.toByte(), LDX(getImmediateValue(), x, p), 2)
             //LDY
