@@ -37,6 +37,7 @@ class JoyPad : IODevice {
         } else if (this.isReset && data.toInt() == 0) {
             buttonArray.copyInto(register) // 現在のボタンの状態をラッチする 次にラッチするまで値は不変
             this.isReset = false
+            buttonSelectIndex = 0
         }
     }
 }
