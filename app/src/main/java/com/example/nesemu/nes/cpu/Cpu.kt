@@ -185,6 +185,8 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //TAY
             0xA8 -> InstructionInfo(0xA8.toByte(), TAY(a, y, p), 2)
             //TYA
+            0x98 -> InstructionInfo(0x98.toByte(), TYA(a, y, p), 2)
+            //TXS
             0x9A -> InstructionInfo(0x9A.toByte(), TXS(x, sp), 2)
             //TSX
             //PHA
