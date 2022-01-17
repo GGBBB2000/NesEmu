@@ -263,22 +263,22 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
                 attributeTables[0][ppuMemAddress.value % 0x33C0 % 0x23C0] = data
             }
             in 0x2400 until 0x27C0, in 0x3400 until 0x37C0 -> { // ネームテーブル1 まとめて書いてもいいけど，ミラーリングの実装を待つ
-                nameTables[1][ppuMemAddress.value] = data
+                nameTables[1][ppuMemAddress.value % 0x3400 % 0x2400] = data
             }
             in 0x27C0 until 0x2800, in 0x37C0 until 0x3800 -> { // 属性テーブル1
-                attributeTables[1][ppuMemAddress.value] = data
+                attributeTables[1][ppuMemAddress.value % 0x37C0 % 0x27C0] = data
             }
             in 0x2800 until 0x2BC0, in 0x3800 until 0x3BC0 -> { // ネームテーブル2
-                nameTables[2][ppuMemAddress.value] = data
+                nameTables[2][ppuMemAddress.value % 0x3800 % 0x2800] = data
             }
             in 0x2BC0 until 0x2C00, in 0x3BC0 until 0x3C00 -> { // 属性テーブル2
-                attributeTables[2][ppuMemAddress.value] = data
+                attributeTables[2][ppuMemAddress.value % 0x3BC0 % 0x2BC0] = data
             }
             in 0x2C00 until 0x2FC0, in 0x3C00 until 0x3F00 -> { // ネームテーブル3 0x3F00以降のバッファはパレットを呼ぶときに使われる
-                nameTables[3][ppuMemAddress.value] = data
+                nameTables[3][ppuMemAddress.value % 0x3C00 % 0x2C00] = data
             }
             in 0x2FC0 until 0x3000 -> { // 属性テーブル3
-                attributeTables[3][ppuMemAddress.value] = data
+                attributeTables[3][ppuMemAddress.value % 0x2FC0] = data
             }
             in 0x3F00 until 0x3F10, // バックグラウンドパレット
             in 0x3F20 until 0x3F30, // ミラー
