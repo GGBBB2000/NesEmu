@@ -1,5 +1,6 @@
 package com.example.nesemu.nes
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.example.nesemu.nes.cartridge.Cartridge
 import com.example.nesemu.nes.util.Address
@@ -15,6 +16,8 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     private val attributeTables = Array(4){Array<Byte>(0x40){0}}
     private val bgPaletteTables = Array(4){Array<Byte>(4){0}}
     private val chrPaletteTables = Array(4){Array<Byte>(4){0}}
+    private var scrollIndex = 0 // xとyのスクロールオフセットの選択
+    private val scrollOffset = Array(2){Array(240){0} }
 
     private val objectAttributeMemory = Array(64){Sprite()}
 
@@ -163,7 +166,10 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
 
     override fun read(address: Address): Byte {
         return when (address.value) {
-            0x2002 -> status.read()
+            0x2002 -> { // 0x2002の読み取りで0x2005の書き込み順序がリセットされる
+                scrollIndex = 0
+                status.read()
+            }
             0x2004 -> 0 // TODO impl sprite mem data
             0x2007 -> readInternalMemory()
             else -> error("ppu read: ${address.value.toString(16)} Illegal Access")
@@ -171,7 +177,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     }
 
     override fun write(address: Address, data: Byte) {
-        println("${data.toUByte().toString(16)} → 0x${address.value.toString(16)}")
+        Log.d("", "${data.toUByte().toString(16)} → 0x${address.value.toString(16)}")
         when (address.value) {
             0x2000 -> ctrlRegister1.data = data
             0x2001 -> ctrlRegister2.data = data
@@ -181,7 +187,14 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
                 objectAttributeMemory[adder / 4].setData(adder % 4, data)
                 spriteMemAddress.increment()
             }
-            0x2005 -> { /*TODO scroll offset*/ }
+            0x2005 -> {
+                if (lineAmount >= 240) {
+                    scrollOffset[scrollIndex].fill(data.toInt() and 0xFF)
+                } else {
+                    scrollOffset[scrollIndex].fill(data.toInt() and 0xFF, lineAmount)
+                }
+                scrollIndex = (scrollIndex + 1) % 2
+            }
             0x2006 -> ppuMemAddress.value = data.toInt() and 0xFF
             0x2007 -> writeToInternalMemory(data)
         }
@@ -256,7 +269,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     }
 
     private fun writeToInternalMemory(data: Byte) {
-        println("(PPU Internal) ${data.toUByte().toString(16)} → 0x${ppuMemAddress.value.toString(16)}")
+        Log.d("", "(PPU Internal) ${data.toUByte().toString(16)} → 0x${ppuMemAddress.value.toString(16)}")
         when (ppuMemAddress.value) {
             in 0x2000 until 0x23C0, in 0x3000 until 0x33C0 -> { // ネームテーブル0 と　ミラー TODO ミラーのアドレス処理
                 nameTables[0][ppuMemAddress.value % 0x3000 % 0x2000] = data
@@ -341,7 +354,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
             status.setVBlank(true)
         }
         lineAmount = cycleAmount / 341
-        if (lineAmount > 262) {
+        if (lineAmount >= 262) {
             lineAmount = 0
             cycleAmount = 0
         }
@@ -353,8 +366,24 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
         sprite -> sprite.y + 1 <= y &&  y < sprite.y + 1 + ctrlRegister1.getSpriteSize()
     }.take(8) // 1ラインに描画できるスプライトは8個まで
 
+
+    private fun getNameTableIndex(x: Int, y: Int, scrollX: Int, scrollY: Int) : Int { // x, y座標とスクロールオフセットから対応するネームテーブルの番号を取得する
+        return if (ctrlRegister1.getNameTableSelect() <= 1) { // ネームテーブル指定が0, 1のとき
+            // ネームテーブル1から右方向にスクロールすると描画範囲はネームテーブル0に戻る
+            // (nameTableSelect() + (scrollX + x) / 256) % 2 -> 0 or 1
+            // ((scrollY + y) / 240) * 2 -> 0 or 2
+            ((ctrlRegister1.getNameTableSelect() + (scrollX + x) / 256) % 2 + ((scrollY + y) / 240) * 2) % 4
+        } else { // ネームテーブル指定が2，3のとき
+            // 上の計算に最後に2を足して1画面分ネームテーブルをずらす．
+            ((ctrlRegister1.getNameTableSelect() + (scrollX + x) / 256) % 2 + ((scrollY + y) / 240) * 2 + 2) % 4
+        }
+    }
+
     private fun getPaletteIndex(x: Int, y: Int) : Int {
-        val palettes = attributeTables[0][y / 32 * 8 + x / 32].toInt() and 0xFF
+        val scrollX = scrollOffset[0][y] // y 行目描画時の横方向のオフセット
+        val scrollY = scrollOffset[1][y] // y 行目描画時の縦方向のオフセット
+        val nameTableIndex = getNameTableIndex(x, y, scrollX, scrollY)
+        val palettes = attributeTables[nameTableIndex][((y + scrollY) % 240) / 32 * 8 + ((x + scrollX) % 256) / 32].toInt() and 0xFF
         return if (x % 32 < 16 && y % 32 < 16) {
             (palettes and 0b1100_0000) ushr 6
         } else if (x % 32 >= 16 && y % 32 < 16) {
@@ -367,7 +396,10 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     }
 
     private fun getPixelData(x: Int, y: Int) : Int {
-        val tileId = nameTables[0][y / 8 * 32 + x / 8].toInt() and 0xFF
+        val scrollX = scrollOffset[0][y] // y 行目描画時の横方向のオフセット
+        val scrollY = scrollOffset[1][y] // y 行目描画時の縦方向のオフセット
+        val nameTableIndex = getNameTableIndex(x, y, scrollX, scrollY)
+        val tileId = nameTables[nameTableIndex][(((y + scrollY) % 240) / 8) * 32 + ((x + scrollX) % 256) / 8].toInt() and 0xFF
         val tileDataAddress : Address = ctrlRegister1.getBGPatternTableAddress()
         tileDataAddress += tileId * 16
         val tileDataOffset = (y % 8).toByte()
