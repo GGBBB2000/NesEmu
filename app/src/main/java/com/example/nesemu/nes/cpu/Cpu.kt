@@ -52,9 +52,9 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
 
     private fun getZeroPageAddress() : Address = Address.buildAddress(0, getImmediateValue().toInt())
 
-    private fun getZeroPageXIndexedAddress() : Address = Address.buildAddress(0, getImmediateValue() + x.value)
+    private fun getZeroPageXIndexedAddress() : Address = Address.buildAddress(0, getImmediateValue().toInt()) + x.value
 
-    private fun getZeroPageYIndexedAddress() : Address = Address.buildAddress(0, getImmediateValue() + y.value)
+    private fun getZeroPageYIndexedAddress() : Address = Address.buildAddress(0, getImmediateValue().toInt()) + y.value
 
     private fun getIndirectYAddress() : Address = getZeroPageAddress() + y.value
 
