@@ -10,7 +10,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NesEmu">
         <activity android:name=".MainActivity"
-            android:screenOrientation="userLandscape">
+            android:screenOrientation="userLandscape"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
