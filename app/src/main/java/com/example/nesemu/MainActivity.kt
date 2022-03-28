@@ -7,16 +7,18 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Button
 import android.widget.TextView
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.Observer
 import com.example.nesemu.nes.JoyPad
 import com.example.nesemu.nes.cartridge.Cartridge
-import com.example.nesemu.nes.Nes
 import com.example.nesemu.view.JoyPadTouchEventListener
 import com.example.nesemu.view.ScreenView
-import java.util.*
 import kotlin.concurrent.timerTask
 
 class MainActivity : AppCompatActivity() {
+    @VisibleForTesting
+    private val module = DefaultMainModule()
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,11 +27,12 @@ class MainActivity : AppCompatActivity() {
         //val romData = applicationContext.assets.open("rom/mapwalker/mapwalker/MapWalker.nes").readBytes()
         val romData = applicationContext.assets.open("rom/giko008.nes").readBytes()
         //val romData = applicationContext.assets.open("rom/nestest.nes").readBytes()
+        val nes = module.nes
         val cartridge = Cartridge.getCartridge(romData)
-        val nes = Nes(cartridge)
-        val screen = nes.getScreen()
+        nes.insertCartridge(cartridge)
+        val screen = module.screen
+        val timer = module.timer
         val view = findViewById<ScreenView>(R.id.screenView)
-        val timer = Timer()
         val handler = Handler(Looper.getMainLooper())
         var fpsCount = 0
         timer.scheduleAtFixedRate(timerTask {

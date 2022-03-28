@@ -6,7 +6,8 @@ import com.example.nesemu.nes.cartridge.Cartridge
 import com.example.nesemu.nes.util.Address
 import com.example.nesemu.nes.util.IODevice
 
-class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
+class Ppu(val nmi: NMI) : IODevice {
+    private var cartridge: Cartridge? = null
     private val ctrlRegister1 = CtrlRegister1()
     private val ctrlRegister2 = CtrlRegister2()
     private val status = PpuStatus()
@@ -164,6 +165,14 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
         0xFF99FFFC.toInt(), 0xFFDDDDDD.toInt(), 0xFF111111.toInt(), 0xFF111111.toInt()
     )
 
+    fun insertCartridge(cartridge: Cartridge) {
+        this.cartridge = cartridge
+    }
+
+    fun ejectCartridge() {
+        this.cartridge = null
+    }
+
     override fun read(address: Address): Byte {
         return when (address.value) {
             0x2002 -> { // 0x2002の読み取りで0x2005の書き込み順序がリセットされる
@@ -206,7 +215,7 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     private fun readInternalMemory() : Byte {
         return when (ppuMemAddress.value) {
             in 0x0000 until 0x2000 -> { // パターンテーブル
-                readSyncBuffer = cartridge.readChrRom(Address.buildAddress(ppuMemAddress.value))
+                readSyncBuffer = cartridge!!.readChrRom(Address.buildAddress(ppuMemAddress.value))
                 readSyncBuffer
             }
             in 0x2000 until 0x23C0, in 0x3000 until 0x33C0 -> { // ネームテーブル0 と　ミラー
@@ -323,6 +332,10 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
     private var cycleAmount = 0
     private var lineAmount = 0
     fun run(cycle: Int) {
+        if (cartridge == null) {
+            return
+        }
+
         cycleAmount += cycle
         if (lineAmount == 239 && cycleAmount / 341 == 240) {
             for (y in 0 until 240) {
@@ -403,16 +416,16 @@ class Ppu(private val cartridge: Cartridge, val nmi: NMI) : IODevice {
         val tileDataAddress : Address = ctrlRegister1.getBGPatternTableAddress()
         tileDataAddress += tileId * 16
         val tileDataOffset = (y % 8).toByte()
-        val tileDataLow = cartridge.readChrRom(tileDataAddress + tileDataOffset).toInt() and 0xFF
-        val tileDataHigh = cartridge.readChrRom(tileDataAddress + 8 + tileDataOffset).toInt() and 0xFF
+        val tileDataLow = cartridge!!.readChrRom(tileDataAddress + tileDataOffset).toInt() and 0xFF
+        val tileDataHigh = cartridge!!.readChrRom(tileDataAddress + 8 + tileDataOffset).toInt() and 0xFF
         return (((tileDataHigh ushr (7 - x % 8)) and 1) shl 1) or ((tileDataLow ushr (7 - x % 8)) and 1)
     }
 
     private fun getSpriteColorIndex(spriteIndex: Int, x: Int, y: Int) : Int {
         val tileDataAddress = ctrlRegister1.getSpritePatternTableAddress()
         tileDataAddress += spriteIndex * 8 + y // TODO 大きいサイズのスプライトの処理
-        val tileDataLow = cartridge.readChrRom(tileDataAddress).toInt() and 0xFF
-        val tileDataHigh = cartridge.readChrRom(tileDataAddress + 8).toInt() and 0xFF
+        val tileDataLow = cartridge!!.readChrRom(tileDataAddress).toInt() and 0xFF
+        val tileDataHigh = cartridge!!.readChrRom(tileDataAddress + 8).toInt() and 0xFF
         return (((tileDataHigh ushr (7 - x)) and 1) shl 1) or ((tileDataLow ushr (7 - x)) and 1)
     }
 }

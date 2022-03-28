@@ -14,10 +14,6 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
     lateinit var sp: Register.SP
     lateinit var p: Register.P
 
-    init {
-        reset()
-    }
-
     fun reset() {
         a = Register.A()
         x = Register.X()
