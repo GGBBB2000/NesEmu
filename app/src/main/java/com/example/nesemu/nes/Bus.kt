@@ -4,9 +4,18 @@ import com.example.nesemu.nes.cartridge.Cartridge
 import com.example.nesemu.nes.util.Address
 import com.example.nesemu.nes.util.IODevice
 
-class Bus(private val cartridge: Cartridge, val ppu: Ppu, val joyPad: JoyPad) : IODevice {
+class Bus(val ppu: Ppu, private val joyPad: JoyPad) : IODevice {
+    private var cartridge: Cartridge? = null
     private val ram = Ram(0x800)
     var dmaLock = false
+
+    fun insertCartridge(cartridge: Cartridge) {
+        this.cartridge = cartridge
+    }
+
+    fun ejectCartridge() {
+        cartridge = null
+    }
 
     override fun read(address: Address): Byte {
         return when(address.value) {
@@ -16,7 +25,7 @@ class Bus(private val cartridge: Cartridge, val ppu: Ppu, val joyPad: JoyPad) : 
             0x4016 -> joyPad.read(address)
             // in 0x4020 until 0x6000 ext rom
             // in 0x6000 until 0x8000 ext ram
-            in 0x8000 .. 0xFFFF -> cartridge.readPrgRom(address % 0x8000)
+            in 0x8000 .. 0xFFFF -> cartridge!!.readPrgRom(address % 0x8000)
             else -> error("read ${address.value} out of bounds")
         }
     }
