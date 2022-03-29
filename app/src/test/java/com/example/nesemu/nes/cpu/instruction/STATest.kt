@@ -4,8 +4,8 @@ import com.example.nesemu.nes.Bus
 import com.example.nesemu.nes.cpu.Register
 import com.example.nesemu.nes.util.Address
 import io.mockk.mockk
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 internal class STATest {
 
@@ -13,7 +13,7 @@ internal class STATest {
 
     private lateinit var register: Register.A
 
-    @Before
+    @BeforeEach
     fun setUp() {
         bus = Bus(mockk(), mockk())
         register = Register.A()
