@@ -2,9 +2,11 @@ package com.example.nesemu.nes.cpu.instruction
 
 import com.example.nesemu.nes.cpu.Register
 
-class TSX(x: Register.X, sp: Register.SP, p: Register.P) : Instruction() {
+class TSX(val x: Register.X, val sp: Register.SP, val p: Register.P) : Instruction() {
     override fun exec() {
-        TODO("Not yet implemented")
+        x.value = sp.address.value.toByte()
+        p.negative = x.value < 0
+        p.zero = x.value.toInt() == 0
     }
 
 }
