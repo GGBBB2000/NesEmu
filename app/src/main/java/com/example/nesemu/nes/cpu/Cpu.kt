@@ -147,6 +147,8 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //CLC
             0x18 -> InstructionInfo(0x18.toByte(), CLC(p), 2)
             //SEC
+            0x38 -> InstructionInfo(0x38.toByte(), SEC(p), 2)
+            //SEI
             0x78 -> InstructionInfo(0x78, SEI(p), 2)
             //CLD
             0xd8 -> InstructionInfo(0xd8.toByte(), CLD(p), 2)
