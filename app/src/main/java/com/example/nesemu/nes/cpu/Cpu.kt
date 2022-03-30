@@ -157,6 +157,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //SED
             0xF8 -> InstructionInfo(0xF8.toByte(), SED(p), 2)
             //CLV
+            0xB8 -> InstructionInfo(0xB8.toByte(), CLV(p), 2)
             //LDA
             0xA9 -> InstructionInfo(0xA9.toByte(), LDA(getImmediateValue(), a, p), 2)
             0xA5 -> InstructionInfo(0xA9.toByte(), LDA(read(getZeroPageAddress()), a, p), 3)
