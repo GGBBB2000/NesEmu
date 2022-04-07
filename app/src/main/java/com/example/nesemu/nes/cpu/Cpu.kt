@@ -112,6 +112,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //BVC
             0x50 -> InstructionInfo(0x50.toByte(), BVC(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BVS
+            0x70 -> InstructionInfo(0x70.toByte(), BVS(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BPL
             0x10 -> InstructionInfo(0x10, BPL(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BMI
