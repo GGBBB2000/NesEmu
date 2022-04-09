@@ -102,6 +102,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0x26 -> InstructionInfo(0x26, ROL(a, getZeroPageAddress(), p, bus), 5)
             //ROR
             //BCC
+            0x90 -> InstructionInfo(0x90.toByte(), BCC(pc,  p, getImmediateValue()), 2)
             //BCS
             0xB0 -> InstructionInfo(0xB0.toByte(), BCS(pc,  p, getImmediateValue()), 2)
             //BEQ
@@ -109,10 +110,13 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //BNE
             0xD0 -> InstructionInfo(0xD0.toByte(), BNE(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BVC
+            0x50 -> InstructionInfo(0x50.toByte(), BVC(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BVS
+            0x70 -> InstructionInfo(0x70.toByte(), BVS(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BPL
             0x10 -> InstructionInfo(0x10, BPL(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BMI
+            0x30 -> InstructionInfo(0x30, BMI(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BIT
             //JMP
             0x4C -> InstructionInfo(0x4C, JMP(getAbsoluteAddress(), pc), 3)

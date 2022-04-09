@@ -1,10 +1,11 @@
 package com.example.nesemu.nes.cpu.instruction
 
-import android.location.Address
 import com.example.nesemu.nes.cpu.Register
 
-class BMI(pc: Register.PC, p: Register.P, dest: Address) : Instruction() {
+class BMI(val pc: Register.PC, val p: Register.P, private val offset: Byte) : Instruction() {
     override fun exec() {
-        TODO("Not yet implemented")
+        if (p.negative) {
+            pc.address += offset.toInt()
+        }
     }
 }
