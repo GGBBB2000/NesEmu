@@ -3,6 +3,7 @@ package com.example.nesemu.nes.cpu.instruction
 import com.example.nesemu.nes.cpu.Register
 import com.example.nesemu.nes.util.Address
 import org.junit.Assert.assertEquals
+import org.junit.Before
 
 import org.junit.Test
 
@@ -11,6 +12,11 @@ class BCCTest {
     private val p = Register.P()
     // オフセットは負の数なので分岐先は0x1
     private val offset = 0x80.toByte()
+
+    @Before
+    fun setup() {
+        pc.address.value = 0x81
+    }
 
     @Test
     fun `BCC C = true`() {
