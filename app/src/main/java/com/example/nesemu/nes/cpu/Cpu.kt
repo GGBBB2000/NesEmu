@@ -202,6 +202,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //PLA
             0x68 -> InstructionInfo(0x68.toByte(), PLA(a, sp, p, bus), 4)
             //PHP
+            0x08 -> InstructionInfo(0x08, PHP(p, sp, bus), 3)
             //PLP
 
             else -> error("[${opcode.toString(16)}] not implemented")
