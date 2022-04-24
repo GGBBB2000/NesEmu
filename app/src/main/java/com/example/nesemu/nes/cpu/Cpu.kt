@@ -122,6 +122,8 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //BMI
             0x30 -> InstructionInfo(0x30, BMI(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BIT
+            0x24 -> InstructionInfo(0x24, BIT(read(getZeroPageAddress()), a, p), 3)
+            0x2C -> InstructionInfo(0x2C, BIT(read(getAbsoluteAddress()), a, p), 4)
             //JMP
             0x4C -> InstructionInfo(0x4C, JMP(getAbsoluteAddress(), pc), 3)
             //JSR
