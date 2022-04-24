@@ -60,6 +60,10 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             handleInterrupt(Address.buildAddress(0xFFFB), Address.buildAddress(0xFFFA))
             nmi.hasInterrupt = false
             return 8
+        } else {
+            if (p.breakFlag /* or irq.hasInterrupt */) { // TODO: IRQの処理の追加
+                handleInterrupt(Address.buildAddress(0xFFFE), Address.buildAddress(0xFFFF))
+            }
         }
         val instInfo = fetch()
         instInfo.inst.exec()
@@ -125,6 +129,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //RTS
             0x60 -> InstructionInfo(0x60, RTS(pc, sp, bus), 6)
             //BRK
+            0x00 -> InstructionInfo(0x0, BRK(p), 7)
             //RTI
             0x40 -> InstructionInfo(0x40.toByte(), RTI(pc, sp, p, bus), 6)
             //CMP
