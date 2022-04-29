@@ -72,17 +72,17 @@ sealed class Argument {
         override fun toString(): String = "$${address}"
     }
 
-    class AbsoluteX(private val address: Address, private val xVal: Byte, private val bus: Bus)
+    class AbsoluteX(private val address: Address, private val x: Register.X, private val bus: Bus)
         : ReadWritable, Argument() {
-        override fun read(): Byte = bus.read(address + xVal)
-        override fun write(data: Byte) = bus.write(address + xVal, data)
+        override fun read(): Byte = bus.read(address + x.value)
+        override fun write(data: Byte) = bus.write(address + x.value, data)
         override fun toString(): String = "$${address},X"
     }
 
-    class AbsoluteY(private val address: Address, private val yVal: Byte, private val bus: Bus)
+    class AbsoluteY(private val address: Address, private val y: Register.Y, private val bus: Bus)
         : ReadWritable, Argument() {
-        override fun read(): Byte = bus.read(address + yVal)
-        override fun write(data: Byte) = bus.write(address + yVal, data)
+        override fun read(): Byte = bus.read(address + y.value)
+        override fun write(data: Byte) = bus.write(address + y.value, data)
         override fun toString(): String = "$${address},Y"
     }
 
@@ -111,7 +111,7 @@ sealed class Argument {
         override fun write(data: Byte) = bus.write(address, data)
         override fun read(): Byte = bus.read(address)
         override fun toString(): String = "($${base.toString(16).uppercase()
-            .padStart(2, '0')}, X)"
+            .padStart(2, '0')},X)"
     }
 
     class IndirectIndexed(private val base: Byte, y: Register.Y, private val bus: Bus)
@@ -127,7 +127,7 @@ sealed class Argument {
         override fun write(data: Byte) = bus.write(address, data)
         override fun read(): Byte = bus.read(address)
         override fun toString(): String = "($${base.toString(16)
-            .uppercase().padStart(2, '0')}), Y"
+            .uppercase().padStart(2, '0')}),Y"
     }
 }
 
