@@ -27,6 +27,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: chmod gradlew
+      run: chmod +x ./gradlew
+
       - name: Run Tests
         run: ./gradlew test
 
