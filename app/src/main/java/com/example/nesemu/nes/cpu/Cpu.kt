@@ -105,8 +105,8 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0x01 -> InstructionInfo(0x01.toByte(), ORA(Argument.IndexedIndirect(getImmediateValue(), x, bus), a, p), 6)
             0x11 -> InstructionInfo(0x11.toByte(), ORA(Argument.IndirectIndexed(getImmediateValue(), y, bus), a, p), 5) // ページクロスで + 1
             //EOR
-            0x49 -> InstructionInfo(0x49.toByte(), EOR(getImmediateValue(), a, p), 2)
-            0x45 -> InstructionInfo(0x45.toByte(), EOR(read(getZeroPageAddress()), a, p), 3)
+            0x49 -> InstructionInfo(0x49.toByte(), EOR(Argument.Immediate(getImmediateValue()), a, p), 2)
+            0x45 -> InstructionInfo(0x45.toByte(), EOR(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
             //ASL
             //LSR
             0x4A -> InstructionInfo(0x4A, LSR(a, null, p, bus), 2)
