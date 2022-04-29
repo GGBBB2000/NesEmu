@@ -47,6 +47,6 @@ class Address private constructor(data: Int) {
     operator fun dec() : Address = Address(value - 1)
 
     override fun toString(): String {
-        return "0x" + value.toString(16)
+        return value.toString(16).uppercase()
     }
 }
