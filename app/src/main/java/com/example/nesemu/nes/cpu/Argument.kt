@@ -42,19 +42,19 @@ sealed class Argument {
         override fun toString(): String = "$${address}"
     }
 
-    class ZeroPageX(immediateVal: Byte, private val xVal: Byte, private val bus: Bus)
+    class ZeroPageX(immediateVal: Byte, private val x: Register.X, private val bus: Bus)
         : ReadWritable, Argument() {
         private val address: Address = Address.buildAddress(0, immediateVal.toInt())
-        override fun read(): Byte = bus.read(address + xVal)
-        override fun write(data: Byte) = bus.write(address + xVal, data)
+        override fun read(): Byte = bus.read(address + x.value)
+        override fun write(data: Byte) = bus.write(address + x.value, data)
         override fun toString(): String = "$${address},X"
     }
 
-    class ZeroPageY(immediateVal: Byte, private val yVal: Byte, private val bus: Bus)
+    class ZeroPageY(immediateVal: Byte, private val y: Register.Y, private val bus: Bus)
         : ReadWritable, Argument() {
         private val address: Address = Address.buildAddress(0, immediateVal.toInt())
-        override fun read(): Byte = bus.read(address + yVal)
-        override fun write(data: Byte) = bus.write(address + yVal, data)
+        override fun read(): Byte = bus.read(address + y.value)
+        override fun write(data: Byte) = bus.write(address + y.value, data)
         override fun toString(): String = "$${address},Y"
     }
 
