@@ -32,30 +32,36 @@ sealed class Argument {
     class Immediate(private val value: Byte): Readable, Argument() {
         override fun read(): Byte = value
         override fun toString(): String = "#$${(value.toInt() and 0xFF).toString(16)
-            .uppercase(Locale.getDefault())}"
+            .uppercase(Locale.getDefault()).padStart(2, '0')}"
     }
 
-    class ZeroPage(immediateVal: Byte, private val bus: Bus): ReadWritable, Argument() {
+    class ZeroPage(private val immediateVal: Byte, private val bus: Bus): ReadWritable, Argument() {
         private val address: Address = Address.buildAddress(0, immediateVal.toInt())
         override fun read(): Byte = bus.read(address)
         override fun write(data: Byte) = bus.write(address, data)
-        override fun toString(): String = "$${address}"
+        override fun toString(): String = "$${immediateVal.toString(16)
+            .uppercase()
+            .padStart(2, '0')}"
     }
 
-    class ZeroPageX(immediateVal: Byte, private val x: Register.X, private val bus: Bus)
+    class ZeroPageX(private val immediateVal: Byte, private val x: Register.X, private val bus: Bus)
         : ReadWritable, Argument() {
         private val address: Address = Address.buildAddress(0, immediateVal.toInt())
         override fun read(): Byte = bus.read(address + x.value)
         override fun write(data: Byte) = bus.write(address + x.value, data)
-        override fun toString(): String = "$${address},X"
+        override fun toString(): String = "$${immediateVal.toString(16)
+            .uppercase()
+            .padStart(2, '0')},X"
     }
 
-    class ZeroPageY(immediateVal: Byte, private val y: Register.Y, private val bus: Bus)
+    class ZeroPageY(private val immediateVal: Byte, private val y: Register.Y, private val bus: Bus)
         : ReadWritable, Argument() {
         private val address: Address = Address.buildAddress(0, immediateVal.toInt())
         override fun read(): Byte = bus.read(address + y.value)
         override fun write(data: Byte) = bus.write(address + y.value, data)
-        override fun toString(): String = "$${address},Y"
+        override fun toString(): String = "$${immediateVal.toString(16)
+            .uppercase()
+            .padStart(2, '0')},Y"
     }
 
 
@@ -104,7 +110,8 @@ sealed class Argument {
 
         override fun write(data: Byte) = bus.write(address, data)
         override fun read(): Byte = bus.read(address)
-        override fun toString(): String = "($${base.toString(16)}, X)"
+        override fun toString(): String = "($${base.toString(16).uppercase()
+            .padStart(2, '0')}, X)"
     }
 
     class IndirectIndexed(private val base: Byte, y: Register.Y, private val bus: Bus)
@@ -119,7 +126,8 @@ sealed class Argument {
 
         override fun write(data: Byte) = bus.write(address, data)
         override fun read(): Byte = bus.read(address)
-        override fun toString(): String = "($${base.toString(16)}), Y"
+        override fun toString(): String = "($${base.toString(16)
+            .uppercase().padStart(2, '0')}), Y"
     }
 }
 
