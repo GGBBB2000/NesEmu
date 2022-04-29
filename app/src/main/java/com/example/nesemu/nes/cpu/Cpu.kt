@@ -93,8 +93,14 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0x69 -> InstructionInfo(0x69.toByte(), ADC(getImmediateValue(), a, p), 2)
             //SBC
             //AND
-            0x29 -> InstructionInfo(0x29.toByte(), AND(getImmediateValue(), a, p), 2)
-            0x25 -> InstructionInfo(0x25.toByte(), AND(read(getZeroPageAddress()), a, p), 3)
+            0x29 -> InstructionInfo(0x29.toByte(), AND(Argument.Immediate(getImmediateValue()), a, p), 2)
+            0x25 -> InstructionInfo(0x25.toByte(), AND(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
+            0x35 -> InstructionInfo(0x15.toByte(), AND(Argument.ZeroPageX(getImmediateValue(), x, bus), a, p), 4)
+            0x2D -> InstructionInfo(0x0D.toByte(), AND(Argument.Absolute(getAbsoluteAddress(), bus), a, p), 4)
+            0x3D -> InstructionInfo(0x1D.toByte(), AND(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), a, p), 4) // ページクロスで + 1
+            0x39 -> InstructionInfo(0x19.toByte(), AND(Argument.AbsoluteY(getAbsoluteAddress(), y, bus), a, p), 4) // ページクロスで + 1
+            0x21 -> InstructionInfo(0x01.toByte(), AND(Argument.IndexedIndirect(getImmediateValue(), x, bus), a, p), 6)
+            0x31 -> InstructionInfo(0x11.toByte(), AND(Argument.IndirectIndexed(getImmediateValue(), y, bus), a, p), 5) // ページクロスで + 1
             //ORA
             0x09 -> InstructionInfo(0x09.toByte(), ORA(Argument.Immediate(getImmediateValue()), a, p), 2)
             0x05 -> InstructionInfo(0x05.toByte(), ORA(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
