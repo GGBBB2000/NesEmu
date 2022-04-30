@@ -4,6 +4,13 @@ import com.example.nesemu.nes.cpu.Argument
 import com.example.nesemu.nes.cpu.Register
 
 class ROL(private val arg: Argument.ReadWritable, val p: Register.P) : Instruction() {
+    init {
+        assert(arg !is Argument.ZeroPageY)
+        assert(arg !is Argument.AbsoluteY)
+        assert(arg !is Argument.IndexedIndirect)
+        assert(arg !is Argument.IndirectIndexed)
+    }
+
     override fun exec() {
         var result = (arg.read().toInt() and 0xFF) shl 1
         if (p.carry) {
