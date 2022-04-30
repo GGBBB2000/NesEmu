@@ -12,6 +12,12 @@ class ROR(private val arg: Argument.ReadWritable, private val p: Register.P) : I
     }
 
     override fun exec() {
-        TODO("Not yet implemented")
+        val result = ((arg.read().toInt() and 0xFF ) shr 1) or if (p.carry) {
+           0b1000_0000
+        } else 0
+        arg.write(result.toByte())
+        p.negative = p.carry
+        p.carry = arg.read() % 2 == 1
+        p.zero = result == 0
     }
 }

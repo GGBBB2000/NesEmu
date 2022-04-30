@@ -125,6 +125,11 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //ROL
             0x26 -> InstructionInfo(0x26, ROL(a, getZeroPageAddress(), p, bus), 5)
             //ROR
+            0x6A -> InstructionInfo(0x6A, ROR(Argument.Accumulator(a), p), 2)
+            0x66 -> InstructionInfo(0x66, ROR(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
+            0x76 -> InstructionInfo(0x76, ROR(Argument.ZeroPageX(getImmediateValue(), x, bus), p), 6)
+            0x6E -> InstructionInfo(0x6E, ROR(Argument.Absolute(getAbsoluteAddress(), bus), p), 6)
+            0x7E -> InstructionInfo(0x7E, ROR(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), p), 6) // + 1
             //BCC
             0x90 -> InstructionInfo(0x90.toByte(), BCC(pc,  p, getImmediateValue()), 2)
             //BCS
