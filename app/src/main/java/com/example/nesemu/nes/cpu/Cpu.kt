@@ -123,7 +123,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //LSR
             0x4A -> InstructionInfo(0x4A, LSR(a, null, p, bus), 2)
             //ROL
-            0x26 -> InstructionInfo(0x26, ROL(a, getZeroPageAddress(), p, bus), 5)
+            0x26 -> InstructionInfo(0x26, ROL(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
             //ROR
             0x6A -> InstructionInfo(0x6A, ROR(Argument.Accumulator(a), p), 2)
             0x66 -> InstructionInfo(0x66, ROR(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
