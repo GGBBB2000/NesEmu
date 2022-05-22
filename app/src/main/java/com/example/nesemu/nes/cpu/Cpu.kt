@@ -121,7 +121,11 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             0x51 -> InstructionInfo(0x51.toByte(), EOR(Argument.IndirectIndexed(getImmediateValue(), y, bus), a, p), 5) // ページクロスで + 1
             //ASL
             //LSR
-            0x4A -> InstructionInfo(0x4A, LSR(a, null, p, bus), 2)
+            0x4A -> InstructionInfo(0x4A, LSR(Argument.Accumulator(a), p), 2)
+            0x46 -> InstructionInfo(0x46, LSR(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
+            0x56 -> InstructionInfo(0x56, LSR(Argument.ZeroPageX(getImmediateValue(), x, bus), p), 6)
+            0x4E -> InstructionInfo(0x4E, LSR(Argument.Absolute(getAbsoluteAddress(), bus), p), 6)
+            0x5E -> InstructionInfo(0x5E, LSR(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), p), 6) // ページクロスで + 1
             //ROL
             0x2A -> InstructionInfo(0x2A, ROL(Argument.Accumulator(a), p), 2)
             0x26 -> InstructionInfo(0x26, ROL(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
