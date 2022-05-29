@@ -92,6 +92,14 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //ADC
             0x69 -> InstructionInfo(0x69.toByte(), ADC(getImmediateValue(), a, p), 2)
             //SBC
+            0xE9 -> InstructionInfo(opcode.toByte(), SBC(Argument.Immediate(getImmediateValue()), a, p), 2)
+            0xE5 -> InstructionInfo(opcode.toByte(), SBC(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
+            0xF5 -> InstructionInfo(opcode.toByte(), SBC(Argument.ZeroPageX(getImmediateValue(), x, bus), a, p), 4)
+            0xED -> InstructionInfo(opcode.toByte(), SBC(Argument.Absolute(getAbsoluteAddress(), bus), a, p), 4)
+            0xFD -> InstructionInfo(opcode.toByte(), SBC(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), a, p), 4) // ページクロスで+1
+            0xF9 -> InstructionInfo(opcode.toByte(), SBC(Argument.AbsoluteY(getAbsoluteAddress(), y, bus), a, p), 4) // ページクロスで+1
+            0xE1 -> InstructionInfo(opcode.toByte(), SBC(Argument.IndexedIndirect(getImmediateValue(), x, bus), a, p), 6)
+            0xF1 -> InstructionInfo(opcode.toByte(), SBC(Argument.IndirectIndexed(getImmediateValue(), y, bus), a, p), 5) // ページクロスで + 1
             //AND
             0x29 -> InstructionInfo(0x29.toByte(), AND(Argument.Immediate(getImmediateValue()), a, p), 2)
             0x25 -> InstructionInfo(0x25.toByte(), AND(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
