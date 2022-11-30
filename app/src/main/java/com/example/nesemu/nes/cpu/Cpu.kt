@@ -90,7 +90,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
         val opcode = read(pc.address++).toInt() and 0xFF
         return when (opcode) {
             //ADC
-            0x69 -> InstructionInfo(0x69.toByte(), ADC(getImmediateValue(), a, p), 2)
+            0x69 -> InstructionInfo(0x69.toByte(), ADC(Argument.Immediate(getImmediateValue()), a, p), 2)
             //SBC
             0xE9 -> InstructionInfo(opcode.toByte(), SBC(Argument.Immediate(getImmediateValue()), a, p), 2)
             0xE5 -> InstructionInfo(opcode.toByte(), SBC(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
