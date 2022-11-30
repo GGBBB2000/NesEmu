@@ -108,4 +108,11 @@ internal class ADCTest {
     // 1101 正 + 正でキャリーは発生しない
     // 1110 正 + 正では0にならない
     // 1111 N = Z = trueにはならない
+
+    // キャリーありの演算
+    @Test
+    fun withCarry() {
+        p.carry = true
+        execTest(1, 1, 3)
+    }
 }
