@@ -1,7 +1,8 @@
 package com.example.nesemu.nes.util
 
-import org.junit.Assert.*
+import junit.framework.Assert.assertEquals
 import org.junit.Test
+
 
 class AddressTest {
     @Test

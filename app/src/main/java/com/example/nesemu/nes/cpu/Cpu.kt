@@ -60,6 +60,10 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             handleInterrupt(Address.buildAddress(0xFFFB), Address.buildAddress(0xFFFA))
             nmi.hasInterrupt = false
             return 8
+        } else {
+            if (p.breakFlag /* or irq.hasInterrupt */) { // TODO: IRQの処理の追加
+                handleInterrupt(Address.buildAddress(0xFFFE), Address.buildAddress(0xFFFF))
+            }
         }
         val instInfo = fetch()
         instInfo.inst.exec()
@@ -86,22 +90,69 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
         val opcode = read(pc.address++).toInt() and 0xFF
         return when (opcode) {
             //ADC
-            0x69 -> InstructionInfo(0x69.toByte(), ADC(getImmediateValue(), a, p), 2)
+            0x69 -> InstructionInfo(0x69.toByte(), ADC(Argument.Immediate(getImmediateValue()), a, p), 2)
             //SBC
+            0xE9 -> InstructionInfo(opcode.toByte(), SBC(Argument.Immediate(getImmediateValue()), a, p), 2)
+            0xE5 -> InstructionInfo(opcode.toByte(), SBC(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
+            0xF5 -> InstructionInfo(opcode.toByte(), SBC(Argument.ZeroPageX(getImmediateValue(), x, bus), a, p), 4)
+            0xED -> InstructionInfo(opcode.toByte(), SBC(Argument.Absolute(getAbsoluteAddress(), bus), a, p), 4)
+            0xFD -> InstructionInfo(opcode.toByte(), SBC(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), a, p), 4) // ページクロスで+1
+            0xF9 -> InstructionInfo(opcode.toByte(), SBC(Argument.AbsoluteY(getAbsoluteAddress(), y, bus), a, p), 4) // ページクロスで+1
+            0xE1 -> InstructionInfo(opcode.toByte(), SBC(Argument.IndexedIndirect(getImmediateValue(), x, bus), a, p), 6)
+            0xF1 -> InstructionInfo(opcode.toByte(), SBC(Argument.IndirectIndexed(getImmediateValue(), y, bus), a, p), 5) // ページクロスで + 1
             //AND
-            0x29 -> InstructionInfo(0x29.toByte(), AND(getImmediateValue(), a, p), 2)
-            0x25 -> InstructionInfo(0x25.toByte(), AND(read(getZeroPageAddress()), a, p), 3)
+            0x29 -> InstructionInfo(0x29.toByte(), AND(Argument.Immediate(getImmediateValue()), a, p), 2)
+            0x25 -> InstructionInfo(0x25.toByte(), AND(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
+            0x35 -> InstructionInfo(0x15.toByte(), AND(Argument.ZeroPageX(getImmediateValue(), x, bus), a, p), 4)
+            0x2D -> InstructionInfo(0x0D.toByte(), AND(Argument.Absolute(getAbsoluteAddress(), bus), a, p), 4)
+            0x3D -> InstructionInfo(0x1D.toByte(), AND(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), a, p), 4) // ページクロスで + 1
+            0x39 -> InstructionInfo(0x19.toByte(), AND(Argument.AbsoluteY(getAbsoluteAddress(), y, bus), a, p), 4) // ページクロスで + 1
+            0x21 -> InstructionInfo(0x01.toByte(), AND(Argument.IndexedIndirect(getImmediateValue(), x, bus), a, p), 6)
+            0x31 -> InstructionInfo(0x11.toByte(), AND(Argument.IndirectIndexed(getImmediateValue(), y, bus), a, p), 5) // ページクロスで + 1
             //ORA
+            0x09 -> InstructionInfo(0x09.toByte(), ORA(Argument.Immediate(getImmediateValue()), a, p), 2)
+            0x05 -> InstructionInfo(0x05.toByte(), ORA(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
+            0x15 -> InstructionInfo(0x15.toByte(), ORA(Argument.ZeroPageX(getImmediateValue(), x, bus), a, p), 4)
+            0x0D -> InstructionInfo(0x0D.toByte(), ORA(Argument.Absolute(getAbsoluteAddress(), bus), a, p), 4)
+            0x1D -> InstructionInfo(0x1D.toByte(), ORA(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), a, p), 4) // ページクロスで + 1
+            0x19 -> InstructionInfo(0x19.toByte(), ORA(Argument.AbsoluteY(getAbsoluteAddress(), y, bus), a, p), 4) // ページクロスで + 1
+            0x01 -> InstructionInfo(0x01.toByte(), ORA(Argument.IndexedIndirect(getImmediateValue(), x, bus), a, p), 6)
+            0x11 -> InstructionInfo(0x11.toByte(), ORA(Argument.IndirectIndexed(getImmediateValue(), y, bus), a, p), 5) // ページクロスで + 1
             //EOR
-            0x49 -> InstructionInfo(0x49.toByte(), EOR(getImmediateValue(), a, p), 2)
-            0x45 -> InstructionInfo(0x45.toByte(), EOR(read(getZeroPageAddress()), a, p), 3)
+            0x49 -> InstructionInfo(0x49.toByte(), EOR(Argument.Immediate(getImmediateValue()), a, p), 2)
+            0x45 -> InstructionInfo(0x45.toByte(), EOR(Argument.ZeroPage(getImmediateValue(), bus), a, p), 3)
+            0x55 -> InstructionInfo(0x55.toByte(), EOR(Argument.ZeroPageX(getImmediateValue(), x, bus), a, p), 4)
+            0x4D -> InstructionInfo(0x4D.toByte(), EOR(Argument.Absolute(getAbsoluteAddress(), bus), a, p), 4)
+            0x5D -> InstructionInfo(0x5D.toByte(), EOR(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), a, p), 4) // ページクロスで + 1
+            0x59 -> InstructionInfo(0x59.toByte(), EOR(Argument.AbsoluteY(getAbsoluteAddress(), y, bus), a, p), 4) // ページクロスで + 1
+            0x41 -> InstructionInfo(0x41.toByte(), EOR(Argument.IndexedIndirect(getImmediateValue(), x, bus), a, p), 6)
+            0x51 -> InstructionInfo(0x51.toByte(), EOR(Argument.IndirectIndexed(getImmediateValue(), y, bus), a, p), 5) // ページクロスで + 1
             //ASL
+            0x0A -> InstructionInfo(0x0A, ASL(Argument.Accumulator(a), p), 2)
+            0x06 -> InstructionInfo(0x06, ASL(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
+            0x16 -> InstructionInfo(0x16, ASL(Argument.ZeroPageX(getImmediateValue(), x, bus), p), 6)
+            0x0E -> InstructionInfo(0x0E, ASL(Argument.Absolute(getAbsoluteAddress(), bus), p), 6)
+            0x1E -> InstructionInfo(0x1E, ASL(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), p), 6) // ページクロスで + 1
             //LSR
-            0x4A -> InstructionInfo(0x4A, LSR(a, null, p, bus), 2)
+            0x4A -> InstructionInfo(0x4A, LSR(Argument.Accumulator(a), p), 2)
+            0x46 -> InstructionInfo(0x46, LSR(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
+            0x56 -> InstructionInfo(0x56, LSR(Argument.ZeroPageX(getImmediateValue(), x, bus), p), 6)
+            0x4E -> InstructionInfo(0x4E, LSR(Argument.Absolute(getAbsoluteAddress(), bus), p), 6)
+            0x5E -> InstructionInfo(0x5E, LSR(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), p), 6) // ページクロスで + 1
             //ROL
-            0x26 -> InstructionInfo(0x26, ROL(a, getZeroPageAddress(), p, bus), 5)
+            0x2A -> InstructionInfo(0x2A, ROL(Argument.Accumulator(a), p), 2)
+            0x26 -> InstructionInfo(0x26, ROL(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
+            0x36 -> InstructionInfo(0x36, ROL(Argument.ZeroPageX(getImmediateValue(), x, bus), p), 6)
+            0x2E -> InstructionInfo(0x2E, ROL(Argument.Absolute(getAbsoluteAddress(), bus), p), 6)
+            0x3E -> InstructionInfo(0x3E, ROL(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), p), 6) // + 1
             //ROR
+            0x6A -> InstructionInfo(0x6A, ROR(Argument.Accumulator(a), p), 2)
+            0x66 -> InstructionInfo(0x66, ROR(Argument.ZeroPage(getImmediateValue(), bus), p), 5)
+            0x76 -> InstructionInfo(0x76, ROR(Argument.ZeroPageX(getImmediateValue(), x, bus), p), 6)
+            0x6E -> InstructionInfo(0x6E, ROR(Argument.Absolute(getAbsoluteAddress(), bus), p), 6)
+            0x7E -> InstructionInfo(0x7E, ROR(Argument.AbsoluteX(getAbsoluteAddress(), x, bus), p), 6) // + 1
             //BCC
+            0x90 -> InstructionInfo(0x90.toByte(), BCC(pc,  p, getImmediateValue()), 2)
             //BCS
             0xB0 -> InstructionInfo(0xB0.toByte(), BCS(pc,  p, getImmediateValue()), 2)
             //BEQ
@@ -109,11 +160,16 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //BNE
             0xD0 -> InstructionInfo(0xD0.toByte(), BNE(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BVC
+            0x50 -> InstructionInfo(0x50.toByte(), BVC(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BVS
+            0x70 -> InstructionInfo(0x70.toByte(), BVS(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BPL
             0x10 -> InstructionInfo(0x10, BPL(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BMI
+            0x30 -> InstructionInfo(0x30, BMI(pc, p, getImmediateValue()), 2) // +1 or 2 ブランチで+1 ページクロスで+2
             //BIT
+            0x24 -> InstructionInfo(0x24, BIT(read(getZeroPageAddress()), a, p), 3)
+            0x2C -> InstructionInfo(0x2C, BIT(read(getAbsoluteAddress()), a, p), 4)
             //JMP
             0x4C -> InstructionInfo(0x4C, JMP(getAbsoluteAddress(), pc), 3)
             //JSR
@@ -121,6 +177,7 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //RTS
             0x60 -> InstructionInfo(0x60, RTS(pc, sp, bus), 6)
             //BRK
+            0x00 -> InstructionInfo(0x0, BRK(p), 7)
             //RTI
             0x40 -> InstructionInfo(0x40.toByte(), RTI(pc, sp, p, bus), 6)
             //CMP
@@ -147,11 +204,17 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //CLC
             0x18 -> InstructionInfo(0x18.toByte(), CLC(p), 2)
             //SEC
+            0x38 -> InstructionInfo(0x38.toByte(), SEC(p), 2)
+            //CLI
+            0x58 -> InstructionInfo(0x58, CLI(p), 2)
+            //SEI
             0x78 -> InstructionInfo(0x78, SEI(p), 2)
             //CLD
             0xd8 -> InstructionInfo(0xd8.toByte(), CLD(p), 2)
             //SED
+            0xF8 -> InstructionInfo(0xF8.toByte(), SED(p), 2)
             //CLV
+            0xB8 -> InstructionInfo(0xB8.toByte(), CLV(p), 2)
             //LDA
             0xA9 -> InstructionInfo(0xA9.toByte(), LDA(getImmediateValue(), a, p), 2)
             0xA5 -> InstructionInfo(0xA9.toByte(), LDA(read(getZeroPageAddress()), a, p), 3)
@@ -186,12 +249,15 @@ class Cpu(val bus: Bus, val nmi: NMI) : IODevice {
             //TXS
             0x9A -> InstructionInfo(0x9A.toByte(), TXS(x, sp), 2)
             //TSX
+            0xBA -> InstructionInfo(0xBA.toByte(), TSX(x, sp, p), 2)
             //PHA
             0x48 -> InstructionInfo(0x48, PHA(a, sp, bus), 3)
             //PLA
             0x68 -> InstructionInfo(0x68.toByte(), PLA(a, sp, p, bus), 4)
             //PHP
+            0x08 -> InstructionInfo(0x08, PHP(p, sp, bus), 3)
             //PLP
+            0x28 -> InstructionInfo(0x28, PLP(p, sp, bus), 4)
 
             else -> error("[${opcode.toString(16)}] not implemented")
         }
